@@ -1,15 +1,15 @@
 export default function QuestionCard({ question, roundNumber }) {
   return (
-    <div className="bg-arena-700 border border-arena-border rounded-xl p-6 animate-slide-up">
-      <div className="flex items-center gap-2 mb-4">
-        <span className="px-2.5 py-0.5 bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-mono rounded-full">
-          Round {roundNumber}
+    <div className="border border-g-border bg-g-900 p-5 animate-slide-up">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-lime font-mono text-xs border border-lime/30 px-2 py-0.5">
+          round {roundNumber}
         </span>
-        <span className="px-2.5 py-0.5 bg-arena-600 border border-arena-border text-white/40 text-xs font-mono rounded-full">
+        <span className="text-white/30 font-mono text-xs border border-g-border px-2 py-0.5">
           {question.concept}
         </span>
       </div>
-      <p className="text-white text-base leading-relaxed font-medium">{question.question}</p>
+      <p className="text-white font-mono text-sm leading-relaxed">{question.question}</p>
     </div>
   )
 }

@@ -1,43 +1,74 @@
 import { useEffect, useRef } from 'react'
 
-export default function ScoreRing({ score, size = 140, color = '#f59e0b', label }) {
-  const circleRef = useRef(null)
-  const r = (size / 2) - 12
+export default function ScoreRing({ score, size = 110, color = '#a8ff3e', label }) {
+  const circRef = useRef(null)
+  const s = Math.min(100, Math.max(0, score || 0))
+  const cx = size / 2
+  const r = size / 2 - 11
   const circ = 2 * Math.PI * r
-  const offset = circ - (score / 100) * circ
+  const offset = circ * (1 - s / 100)
 
   useEffect(() => {
-    if (circleRef.current) {
-      circleRef.current.style.strokeDashoffset = circ
-      setTimeout(() => {
-        if (circleRef.current) {
-          circleRef.current.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)'
-          circleRef.current.style.strokeDashoffset = offset
-        }
-      }, 100)
-    }
+    const el = circRef.current
+    if (!el) return
+    el.style.transition = 'none'
+    el.style.strokeDashoffset = String(circ)
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        el.style.transition = 'stroke-dashoffset 1.1s cubic-bezier(0.4,0,0.2,1)'
+        el.style.strokeDashoffset = String(offset)
+      })
+    })
+    return () => cancelAnimationFrame(raf)
   }, [score])
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+    <div className="flex flex-col items-center gap-2">
+      <svg
+        width={size} height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        style={{ display: 'block' }}
+      >
+        {/* track */}
         <circle
-          cx={size/2} cy={size/2} r={r}
-          fill="none" stroke="#1c1c2c" strokeWidth="8"
+          cx={cx} cy={cx} r={r}
+          fill="none"
+          stroke="#1a1a1a"
+          strokeWidth="7"
         />
+        {/* fill */}
         <circle
-          ref={circleRef}
-          cx={size/2} cy={size/2} r={r}
-          fill="none" stroke={color} strokeWidth="8"
+          ref={circRef}
+          cx={cx} cy={cx} r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth="7"
           strokeLinecap="round"
-          strokeDasharray={circ}
+          strokeDasharray={`${circ} ${circ}`}
           strokeDashoffset={circ}
-          transform={`rotate(-90 ${size/2} ${size/2})`}
+          transform={`rotate(-90 ${cx} ${cx})`}
+          style={{ willChange: 'stroke-dashoffset' }}
         />
-        <text x={size/2} y={size/2 - 6} textAnchor="middle" fill="white" fontSize="28" fontWeight="600" fontFamily="Inter">{score}</text>
-        <text x={size/2} y={size/2 + 14} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="11" fontFamily="Inter">/100</text>
+        {/* score text */}
+        <text
+          x={cx} y={cx - 5}
+          textAnchor="middle"
+          fill="white"
+          fontSize={size > 100 ? 22 : 17}
+          fontWeight="700"
+          fontFamily="JetBrains Mono, monospace"
+        >{s}</text>
+        <text
+          x={cx} y={cx + 12}
+          textAnchor="middle"
+          fill="rgba(255,255,255,0.3)"
+          fontSize="9"
+          fontFamily="JetBrains Mono, monospace"
+        >/100</text>
       </svg>
-      {label && <span className="text-white/40 text-xs">{label}</span>}
+      {label && (
+        <span className="text-white/30 font-mono text-xs">{label}</span>
+      )}
     </div>
   )
 }

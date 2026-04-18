@@ -1,65 +1,69 @@
 import { useMemo, useState } from 'react'
-import { getSeverityColor } from '../../utils/scoreCalculator'
+import { getSeverityBorder } from '../../utils/scoreCalculator'
 import ScoreRing from '../ui/ScoreRing'
 
 export default function CodeReviewCard({ review, onStartInterview, isLoading }) {
   const [showRefactor, setShowRefactor] = useState(false)
 
-  const sortedIssues = useMemo(() => {
-    if (!review?.issues) return []
-    const order = { high: 0, medium: 1, low: 2 }
-    return [...review.issues].sort((a, b) => order[a.severity] - order[b.severity])
-  }, [review?.issues])
+  const sortedIssues = useMemo(()=>{
+    if(!review?.issues) return []
+    const o={high:0,medium:1,low:2}
+    return [...review.issues].sort((a,b)=>o[a.severity]-o[b.severity])
+  },[review?.issues])
 
-  const ringColor = review?.healthScore >= 75 ? '#34d399' : review?.healthScore >= 50 ? '#f59e0b' : '#f87171'
+  const ringColor = review?.healthScore>=75?'#a8ff3e':review?.healthScore>=50?'#facc15':'#f87171'
 
   return (
-    <div className="animate-slide-up space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="animate-slide-up space-y-0">
+      {/* header */}
+      <div className="border border-g-border bg-g-900 p-5 flex items-center justify-between">
         <div>
-          <h2 className="text-white font-semibold text-xl">Code Review</h2>
-          <p className="text-white/40 text-sm mt-0.5">AI analysis of your submission</p>
+          <div className="text-lime font-mono text-xs mb-1">// code review</div>
+          <h2 className="text-white font-mono font-bold text-lg">Analysis</h2>
+          <p className="text-white/30 font-mono text-xs mt-0.5">AI scan of your submission</p>
         </div>
-        <ScoreRing score={review?.healthScore ?? 0} color={ringColor} label="Code Health" size={120} />
+        <ScoreRing score={review?.healthScore??0} color={ringColor} label="health" size={100}/>
       </div>
 
-      {review?.strengths?.length > 0 && (
-        <div className="bg-arena-700 border border-arena-border rounded-xl p-5">
-          <h3 className="text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-3">✓ Strengths</h3>
-          <ul className="space-y-1.5">
-            {review.strengths.map((s, i) => (
-              <li key={i} className="text-white/70 text-sm flex gap-2">
-                <span className="text-emerald-400 mt-0.5">—</span>
-                <span>{s}</span>
+      {/* strengths */}
+      {review?.strengths?.length>0&&(
+        <div className="border-x border-b border-g-border bg-g-900 p-5">
+          <div className="text-lime font-mono text-xs mb-3">// strengths</div>
+          <ul className="space-y-2">
+            {review.strengths.map((s,i)=>(
+              <li key={i} className="flex gap-3 font-mono text-xs text-white/60">
+                <span className="text-lime shrink-0">+</span>{s}
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      {sortedIssues.length > 0 && (
-        <div className="bg-arena-700 border border-arena-border rounded-xl p-5">
-          <h3 className="text-red-400 text-xs font-semibold uppercase tracking-wider mb-3">⚠ Issues Found</h3>
-          <div className="space-y-3">
-            {sortedIssues.map((issue, i) => (
-              <div key={i} className={`border rounded-lg p-3 ${getSeverityColor(issue.severity)}`}>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-xs font-mono uppercase font-semibold`}>{issue.severity}</span>
-                  {issue.line && <span className="text-white/30 text-xs font-mono">line {issue.line}</span>}
+      {/* issues */}
+      {sortedIssues.length>0&&(
+        <div className="border-x border-b border-g-border bg-g-900 p-5">
+          <div className="text-red-400 font-mono text-xs mb-3">// issues ({sortedIssues.length})</div>
+          <div className="space-y-2">
+            {sortedIssues.map((issue,i)=>(
+              <div key={i} className={`border px-3 py-2.5 ${getSeverityBorder(issue.severity)}`}>
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="font-mono text-xs font-bold uppercase">{issue.severity}</span>
+                  {issue.line&&<span className="text-white/25 font-mono text-xs">ln {issue.line}</span>}
                 </div>
-                <p className="text-sm text-white/80">{issue.description}</p>
+                <p className="font-mono text-xs text-white/65 leading-relaxed">{issue.description}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {review?.topicsToStudy?.length > 0 && (
-        <div className="bg-arena-700 border border-arena-border rounded-xl p-5">
-          <h3 className="text-amber-400 text-xs font-semibold uppercase tracking-wider mb-3">📚 Topics to Study</h3>
+      {/* topics */}
+      {review?.topicsToStudy?.length>0&&(
+        <div className="border-x border-b border-g-border bg-g-900 p-5">
+          <div className="text-yellow-400 font-mono text-xs mb-3">// study topics</div>
           <div className="flex flex-wrap gap-2">
-            {review.topicsToStudy.map((t, i) => (
-              <span key={i} className="px-3 py-1 bg-amber-400/10 border border-amber-400/20 text-amber-300 text-xs rounded-full font-mono">
+            {review.topicsToStudy.map((t,i)=>(
+              <span key={i} className="border border-yellow-400/30 text-yellow-400/80 font-mono text-xs px-2.5 py-1">
                 {t}
               </span>
             ))}
@@ -67,30 +71,29 @@ export default function CodeReviewCard({ review, onStartInterview, isLoading }) 
         </div>
       )}
 
-      {review?.refactoredCode && (
-        <div className="bg-arena-700 border border-arena-border rounded-xl overflow-hidden">
-          <button
-            onClick={() => setShowRefactor(v => !v)}
-            className="w-full flex items-center justify-between px-5 py-3 text-sm text-white/60 hover:text-white transition-colors"
-          >
-            <span className="font-semibold text-xs uppercase tracking-wider">🔧 Refactored Version</span>
-            <span>{showRefactor ? '▲' : '▼'}</span>
+      {/* refactored */}
+      {review?.refactoredCode&&(
+        <div className="border-x border-b border-g-border">
+          <button onClick={()=>setShowRefactor(v=>!v)}
+            className="w-full flex items-center justify-between px-5 py-3 text-white/40 hover:text-white font-mono text-xs transition-colors bg-g-900">
+            <span>// refactored version</span>
+            <span>{showRefactor?'▲':'▼'}</span>
           </button>
-          {showRefactor && (
-            <pre className="p-5 text-xs font-mono text-white/80 overflow-x-auto bg-arena-800 border-t border-arena-border leading-relaxed">
+          {showRefactor&&(
+            <pre className="p-5 font-mono text-xs text-white/70 overflow-x-auto bg-g-800 border-t border-g-border leading-relaxed code-scroll">
               {review.refactoredCode}
             </pre>
           )}
         </div>
       )}
 
-      <button
-        onClick={onStartInterview}
-        disabled={isLoading}
-        className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-black font-bold rounded-xl transition-colors text-sm tracking-wide"
-      >
-        {isLoading ? 'Generating Questions...' : 'Start Interview →'}
-      </button>
+      {/* cta */}
+      <div className="border-x border-b border-g-border p-5 bg-g-900">
+        <button onClick={onStartInterview} disabled={isLoading}
+          className="w-full py-3 bg-lime text-black font-bold font-mono text-sm hover:bg-lime-dim disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+          {isLoading?'generating questions…':'START INTERVIEW →'}
+        </button>
+      </div>
     </div>
   )
 }

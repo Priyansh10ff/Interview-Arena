@@ -16,8 +16,8 @@ const STARTER = {
 }
 
 export default function CodingChallenge({ domain, diff, data, onResult }) {
-  const [lang, setLang] = useState('javascript')
-  const [code, setCode] = useState(STARTER.javascript)
+  const [lang, setLang] = useState('c++')
+  const [code, setCode] = useState(STARTER['c++'])
   const [elapsed, setElapsed] = useState(0)       // seconds
   const [started, setStarted] = useState(false)
   const [hints, setHints] = useState([])
@@ -102,7 +102,7 @@ export default function CodingChallenge({ domain, diff, data, onResult }) {
   }
 
   const problem = data || {}
-  const LANGS = ['javascript','python','java','c++']
+  const LANGS = ['c++','java','python','javascript']
 
   return (
     <div className="min-h-screen bg-g-950 flex flex-col">

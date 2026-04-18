@@ -74,3 +74,19 @@ export function buildCodingEvalPrompt(problem, code, lang) {
     maxTokens:300,
   }
 }
+
+// ── Multi-file / project analysis ───────────────────────────────────
+export function buildProjectReviewPrompt(filesContent, diff) {
+  return {
+    system:`Senior ${diff}-level code reviewer analysing a multi-file project. JSON only.`,
+    user:`Project files:\n${trunc(filesContent,1800)}\nReturn:{"healthScore":<0-100>,"architecture":"<1 sentence summary>","strengths":["..."],"issues":[{"file":"...","severity":"high|medium|low","description":"..."}],"refactoredCode":"<fix for the most critical issue only>","topicsToStudy":["..."]}`,
+    maxTokens:1600,
+  }
+}
+export function buildProjectQuestionsPrompt(filesContent, reviewSummary, diff) {
+  return {
+    system:`Technical interviewer. ${diff}. JSON only.`,
+    user:`Project excerpt:${trunc(filesContent,500)}\nReview:${trunc(reviewSummary,200)}\nReturn 5 questions about architecture/design decisions:{"questions":[{"question":"...","concept":"..."},{"question":"...","concept":"..."},{"question":"...","concept":"..."},{"question":"...","concept":"..."},{"question":"...","concept":"..."}]}`,
+    maxTokens:500,
+  }
+}

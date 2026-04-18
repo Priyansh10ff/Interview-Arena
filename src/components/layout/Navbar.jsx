@@ -14,50 +14,61 @@ export default function Navbar() {
     navigate('/')
   }
 
-  const link = (to, label) => (
-    <Link
-      to={to}
-      className={`text-xs font-mono px-1 py-0.5 transition-colors ${
-        pathname === to
-          ? 'text-white border-b border-lime'
-          : 'text-white/40 hover:text-white'
-      }`}
-    >
-      {label}
-    </Link>
-  )
+  const NAV = [
+    { to: '/dashboard', label: 'Dashboard' },
+    { to: '/history', label: 'History' },
+    { to: '/topic', label: 'Practice' },
+    { to: '/settings', label: 'Settings' },
+  ]
 
   return (
-    <nav className="border-b border-g-border bg-g-900 sticky top-0 z-50">
-      <div className="max-w-5xl mx-auto px-4 h-12 flex items-center justify-between">
-        <Link to={user ? '/dashboard' : '/'} className="flex items-center gap-2">
-          <span className="text-lime font-mono font-bold text-sm tracking-wider">[IA]</span>
-          <span className="text-white/60 font-mono text-xs hidden sm:block">interview-arena</span>
+    <nav className="border-b border-g-border bg-g-950 sticky top-0 z-50">
+      <div className="max-w-5xl mx-auto px-4 h-13 flex items-center justify-between" style={{height:'52px'}}>
+
+        {/* logo */}
+        <Link to={user ? '/dashboard' : '/'} className="flex items-center gap-3 shrink-0">
+          <div className="border border-lime/40 px-2 py-0.5">
+            <span className="text-lime font-mono font-bold text-xs tracking-widest">IA</span>
+          </div>
+          <span className="text-white/40 font-mono text-xs hidden md:block tracking-wider">
+            INTERVIEW<span className="text-lime">·</span>ARENA
+          </span>
         </Link>
 
         {user && (
-          <div className="flex items-center gap-4">
-            {link('/dashboard', 'dashboard')}
-            {link('/history', 'history')}
-            {link('/topic', 'practice')}
-            <Link
-              to="/settings"
-              className={`text-xs font-mono px-1 py-0.5 transition-colors ${pathname==='/settings' ? 'text-lime' : 'text-white/40 hover:text-white'}`}
-              title="Settings & API Key"
-            >
-              settings
+          <div className="flex items-center gap-1">
+            {/* nav links */}
+            {NAV.map(({ to, label }) => {
+              const active = pathname === to || (to === '/dashboard' && pathname === '/')
+              return (
+                <Link key={to} to={to}
+                  className={`px-3 py-1.5 font-mono text-xs transition-colors relative
+                    ${active
+                      ? 'text-white bg-g-800 border border-g-border'
+                      : 'text-white/35 hover:text-white/70 hover:bg-g-900'
+                    }`}
+                >
+                  {label}
+                  {active && (
+                    <span className="absolute bottom-0 left-0 right-0 h-px bg-lime"/>
+                  )}
+                </Link>
+              )
+            })}
+
+            {/* divider */}
+            <div className="w-px h-4 bg-g-border mx-2"/>
+
+            {/* new session CTA */}
+            <Link to="/session/new"
+              className="px-4 py-1.5 bg-lime text-black font-bold font-mono text-xs hover:bg-lime-dim transition-colors whitespace-nowrap">
+              + New
             </Link>
-            <Link
-              to="/session/new"
-              className="px-3 py-1 bg-lime text-black text-xs font-bold font-mono hover:bg-lime-dim transition-colors"
-            >
-              + new
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="text-white/25 hover:text-white/60 text-xs font-mono transition-colors"
-            >
-              exit
+
+            {/* logout */}
+            <button onClick={handleLogout}
+              className="px-3 py-1.5 text-white/25 hover:text-white/60 font-mono text-xs transition-colors">
+              ↩
             </button>
           </div>
         )}

@@ -14,171 +14,254 @@ import {
 } from '../utils/promptBuilder'
 
 const DOMAINS = [
-  { id:'dsa', label:'DSA', desc:'Data Structures & Algorithms', types:['coding','mcq','descriptive'] },
-  { id:'react', label:'React', desc:'Hooks, state, performance', types:['mcq','descriptive'] },
-  { id:'javascript', label:'JavaScript', desc:'ES6+, async, closures', types:['coding','mcq','descriptive'] },
-  { id:'python', label:'Python', desc:'Syntax, OOP, stdlib', types:['coding','mcq','descriptive'] },
-  { id:'system-design', label:'System Design', desc:'Scalability & architecture', types:['descriptive'] },
-  { id:'sql', label:'SQL', desc:'Queries, joins, indexes', types:['coding','mcq','descriptive'] },
-  { id:'oop', label:'OOP', desc:'Patterns & principles', types:['mcq','descriptive'] },
-  { id:'os', label:'OS', desc:'Processes, memory, scheduling', types:['mcq','descriptive'] },
-  { id:'typescript', label:'TypeScript', desc:'Types, generics, config', types:['mcq','descriptive'] },
-  { id:'networks', label:'Networks', desc:'HTTP, TCP, protocols', types:['mcq','descriptive'] },
+  { id:'dsa',           label:'DSA',           desc:'Data Structures & Algorithms', types:['coding','mcq','descriptive'] },
+  { id:'react',         label:'React',          desc:'Hooks, state, performance',    types:['mcq','descriptive'] },
+  { id:'javascript',    label:'JavaScript',     desc:'ES6+, async, closures',        types:['coding','mcq','descriptive'] },
+  { id:'python',        label:'Python',         desc:'Syntax, OOP, stdlib',          types:['coding','mcq','descriptive'] },
+  { id:'system-design', label:'System Design',  desc:'Scalability & architecture',   types:['descriptive'] },
+  { id:'sql',           label:'SQL',            desc:'Queries, joins, indexes',      types:['coding','mcq','descriptive'] },
+  { id:'oop',           label:'OOP',            desc:'Patterns & principles',        types:['mcq','descriptive'] },
+  { id:'os',            label:'OS',             desc:'Processes, memory, scheduling',types:['mcq','descriptive'] },
+  { id:'typescript',    label:'TypeScript',     desc:'Types, generics, config',      types:['mcq','descriptive'] },
+  { id:'networks',      label:'Networks',       desc:'HTTP, TCP, protocols',         types:['mcq','descriptive'] },
+  { id:'cpp',           label:'C++',            desc:'STL, memory, OOP',             types:['coding','mcq','descriptive'] },
+  { id:'custom',        label:'Custom Topic',   desc:'Enter your own domain',        types:['coding','mcq','descriptive'], isCustom:true },
 ]
 
 const TYPE_META = {
-  coding:{ label:'CODING', desc:'Write code — LeetCode style', icon:'{ }' },
-  mcq:{ label:'MCQ', desc:'5 multiple choice questions', icon:'○' },
-  descriptive:{ label:'DESCRIPTIVE', desc:'3 open-ended interview Qs', icon:'≡' },
+  coding:      { label:'CODING',      desc:'LeetCode-style problem + editor',  icon:'{ }' },
+  mcq:         { label:'MCQ',         desc:'5 multiple choice questions',       icon:'○' },
+  descriptive: { label:'DESCRIPTIVE', desc:'3 open-ended interview questions',  icon:'≡' },
 }
 
-const DIFFS = ['easy','medium','hard']
+const DIFFS = ['easy', 'medium', 'hard']
 
 export default function TopicSession() {
-  const [step, setStep] = useState('domain')   // domain | type | diff | loading | challenge | result
+  const [step, setStep] = useState('domain')
   const [domain, setDomain] = useState(null)
+  const [customTopic, setCustomTopic] = useState('')
+  const [subtopic, setSubtopic] = useState('')
   const [type, setType] = useState(null)
   const [diff, setDiff] = useState('medium')
-  const [data, setData] = useState(null)         // challenge data from AI
+  const [data, setData] = useState(null)
   const [score, setScore] = useState(null)
   const [feedback, setFeedback] = useState(null)
   const { runAI } = useAI()
   const { state } = useSessionContext()
 
+  function getEffectiveDomain() {
+    if (!domain?.isCustom) return domain?.label || ''
+    const base = customTopic.trim() || 'general programming'
+    return subtopic.trim() ? `${base} — ${subtopic.trim()}` : base
+  }
+
   async function launch() {
-    if (!hasApiKey()) {
-      alert('Add your API key in Settings first.')
-      return
-    }
+    if (!hasApiKey()) { alert('Add your API key in Settings first.'); return }
+    if (domain?.isCustom && !customTopic.trim()) return
     setStep('loading')
     try {
+      const domLabel = getEffectiveDomain()
       let prompt
-      if (type === 'mcq') prompt = buildMcqPrompt(domain.label)
-      else if (type === 'descriptive') prompt = buildDescriptivePrompt(domain.label, diff)
-      else prompt = buildCodingProblemPrompt(domain.label, diff)
-
+      if (type === 'mcq') prompt = buildMcqPrompt(domLabel)
+      else if (type === 'descriptive') prompt = buildDescriptivePrompt(domLabel, diff)
+      else prompt = buildCodingProblemPrompt(domLabel, diff)
       const result = await runAI(prompt.system, prompt.user, prompt.maxTokens)
       setData(result)
       setStep('challenge')
-    } catch {
-      setStep('diff')
-    }
+    } catch { setStep('diff') }
   }
 
-  function onResult(s, fb) {
-    setScore(s)
-    setFeedback(fb)
-    setStep('result')
-  }
+  function onResult(s, fb) { setScore(s); setFeedback(fb); setStep('result') }
 
   function reset() {
-    setStep('domain'); setDomain(null); setType(null)
-    setDiff('medium'); setData(null); setScore(null); setFeedback(null)
+    setStep('domain'); setDomain(null); setCustomTopic(''); setSubtopic('')
+    setType(null); setDiff('medium'); setData(null); setScore(null); setFeedback(null)
   }
 
+  // ── challenge screens ──────────────────────────────────────────────
   if (step === 'loading') return (
     <div className="min-h-screen bg-g-950 flex flex-col">
       <Navbar />
-      <div className="flex-1 flex flex-col items-center justify-center gap-4">
-        <div className="text-lime font-mono text-xs animate-pulse">generating challenge...</div>
-        <div className="w-48 h-px bg-g-border overflow-hidden">
-          <div className="h-full bg-lime w-full animate-[scan_1s_linear_infinite]" />
-        </div>
+      <div className="flex-1 flex flex-col items-center justify-center gap-5">
+        <div className="w-10 h-10 border-2 border-g-border border-t-lime animate-spin" style={{animationDuration:'0.8s'}}/>
+        <div className="text-white/30 font-mono text-xs">generating {type} challenge…</div>
+        <div className="text-white/15 font-mono text-xs">{getEffectiveDomain()} · {diff}</div>
       </div>
     </div>
   )
 
   if (step === 'challenge') return (
     type === 'coding'
-      ? <CodingChallenge domain={domain} diff={diff} data={data} onResult={onResult} />
+      ? <CodingChallenge domain={{label:getEffectiveDomain()}} diff={diff} data={data} onResult={onResult}/>
       : type === 'mcq'
-      ? <McqChallenge domain={domain} data={data} onResult={onResult} />
-      : <DescriptiveChallenge domain={domain} diff={diff} data={data} onResult={onResult} />
+      ? <McqChallenge domain={{label:getEffectiveDomain()}} data={data} onResult={onResult}/>
+      : <DescriptiveChallenge domain={{label:getEffectiveDomain()}} diff={diff} data={data} onResult={onResult}/>
   )
 
   if (step === 'result') return (
     <div className="min-h-screen bg-g-950">
       <Navbar />
-      <div className="max-w-xl mx-auto px-4 py-16 text-center">
-        <div className="text-lime text-xs font-mono mb-2">// result</div>
-        <div className={`font-mono font-bold text-7xl mb-2 ${score>=70?'text-lime':score>=40?'text-yellow-400':'text-red-400'}`}>
-          {score}<span className="text-2xl text-white/20">/100</span>
+      <div className="max-w-lg mx-auto px-4 py-20 text-center">
+        <div className="text-lime font-mono text-xs mb-3">// result</div>
+        <div className={`font-mono font-bold mb-2 ${score>=70?'text-lime':score>=40?'text-yellow-400':'text-red-400'}`}
+          style={{fontSize:'80px',lineHeight:1}}>
+          {score}
         </div>
-        <div className="text-white/50 font-mono text-xs mb-1">{domain?.label} · {type} · {diff}</div>
-        {feedback && <p className="text-white/50 font-mono text-xs leading-relaxed mt-4 max-w-sm mx-auto border border-g-border px-4 py-3">{feedback}</p>}
-        <div className="flex items-center justify-center gap-3 mt-8">
-          <button onClick={reset} className="px-5 py-2 bg-lime text-black font-bold font-mono text-xs hover:bg-lime-dim transition-colors">PRACTICE AGAIN</button>
-          <Link to="/dashboard" className="px-5 py-2 border border-g-border text-white/40 font-mono text-xs hover:text-white hover:border-g-hi transition-colors">DASHBOARD</Link>
+        <div className="text-white/25 font-mono text-xs mb-1">/100</div>
+        <div className="text-white/30 font-mono text-xs mb-6">{getEffectiveDomain()} · {type} · {diff}</div>
+        {feedback && (
+          <div className="border border-g-border bg-g-900 px-5 py-4 text-white/45 font-mono text-xs leading-relaxed text-left mb-8">
+            {feedback}
+          </div>
+        )}
+        <div className="flex gap-3 justify-center">
+          <button onClick={reset}
+            className="px-5 py-2.5 bg-lime text-black font-bold font-mono text-xs hover:bg-lime-dim transition-colors">
+            PRACTICE AGAIN
+          </button>
+          <Link to="/dashboard"
+            className="px-5 py-2.5 border border-g-border text-white/40 font-mono text-xs hover:text-white hover:border-g-hi transition-colors">
+            DASHBOARD
+          </Link>
         </div>
       </div>
     </div>
   )
 
+  // ── setup wizard ───────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-g-950">
       <Navbar />
       <div className="max-w-3xl mx-auto px-4 py-10">
 
-        {/* Step: domain */}
+        {/* step 1 — domain */}
         {step === 'domain' && (
           <div className="animate-slide-up">
-            <div className="text-lime text-xs font-mono mb-1">// step 01</div>
-            <h1 className="text-white font-bold font-mono text-2xl mb-6">Choose Domain</h1>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-0 border border-g-border">
-              {DOMAINS.map((d,i) => (
-                <button key={d.id} onClick={() => { setDomain(d); setStep('type') }}
-                  className={`p-4 text-left border-g-border hover:bg-g-800 transition-colors group
-                    ${i%3!==2?'border-r':''} ${i<DOMAINS.length-3?'border-b':''}`}>
-                  <div className="text-white font-mono font-bold text-sm group-hover:text-lime transition-colors">{d.label}</div>
-                  <div className="text-white/25 font-mono text-xs mt-0.5 leading-relaxed">{d.desc}</div>
-                </button>
-              ))}
+            <div className="text-lime font-mono text-xs mb-1">// step 01</div>
+            <h1 className="text-white font-bold font-mono text-2xl mb-7">Choose Domain</h1>
+
+            {/* 3-col grid — 12 items = 4 rows, even */}
+            <div className="grid grid-cols-3 border border-g-border">
+              {DOMAINS.map((d, i) => {
+                const row = Math.floor(i / 3)
+                const col = i % 3
+                const totalRows = Math.ceil(DOMAINS.length / 3)
+                const isLastRow = row === totalRows - 1
+                const isLastCol = col === 2
+                return (
+                  <button key={d.id}
+                    onClick={() => { setDomain(d); setStep(d.isCustom ? 'custom' : 'type') }}
+                    className={`p-5 text-left hover:bg-g-800 transition-colors group
+                      ${!isLastCol ? 'border-r border-g-border' : ''}
+                      ${!isLastRow ? 'border-b border-g-border' : ''}`}>
+                    <div className={`font-mono font-bold text-sm mb-1 transition-colors ${d.isCustom?'text-lime/70 group-hover:text-lime':'text-white group-hover:text-lime'}`}>
+                      {d.isCustom ? '+ ' : ''}{d.label}
+                    </div>
+                    <div className="text-white/25 font-mono text-xs leading-relaxed">{d.desc}</div>
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
 
-        {/* Step: type */}
-        {step === 'type' && domain && (
+        {/* step 1b — custom topic input */}
+        {step === 'custom' && (
           <div className="animate-slide-up">
             <button onClick={()=>setStep('domain')} className="text-white/25 font-mono text-xs hover:text-white transition-colors mb-6 block">← back</button>
-            <div className="text-lime text-xs font-mono mb-1">// step 02 · {domain.label}</div>
-            <h1 className="text-white font-bold font-mono text-2xl mb-6">Question Type</h1>
-            <div className="grid grid-cols-1 gap-0 border border-g-border">
-              {domain.types.map((t,i) => (
-                <button key={t} onClick={() => { setType(t); setStep('diff') }}
-                  className={`flex items-center gap-5 px-5 py-5 text-left hover:bg-g-800 transition-colors group ${i<domain.types.length-1?'border-b border-g-border':''}`}>
-                  <span className="text-2xl font-mono text-lime/40 w-8 text-center">{TYPE_META[t].icon}</span>
-                  <div>
+            <div className="text-lime font-mono text-xs mb-1">// custom topic</div>
+            <h1 className="text-white font-bold font-mono text-2xl mb-7">Your Topic</h1>
+
+            <div className="border border-g-border bg-g-900 p-6 space-y-5">
+              <div>
+                <label className="text-white/30 font-mono text-xs block mb-2">domain / topic *</label>
+                <input
+                  type="text"
+                  value={customTopic}
+                  onChange={e => setCustomTopic(e.target.value)}
+                  placeholder="e.g. GraphQL, Redis, Docker, WebSockets…"
+                  className="w-full bg-g-800 border border-g-border text-white font-mono text-sm px-4 py-3 focus:outline-none focus:border-lime/50 placeholder-white/15 transition-colors"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="text-white/30 font-mono text-xs block mb-2">subtopic <span className="text-white/15">(optional)</span></label>
+                <input
+                  type="text"
+                  value={subtopic}
+                  onChange={e => setSubtopic(e.target.value)}
+                  placeholder="e.g. mutations, caching, authentication…"
+                  className="w-full bg-g-800 border border-g-border text-white font-mono text-sm px-4 py-3 focus:outline-none focus:border-lime/50 placeholder-white/15 transition-colors"
+                />
+              </div>
+              {customTopic.trim() && (
+                <div className="border border-g-border px-4 py-3 bg-g-800">
+                  <span className="text-white/25 font-mono text-xs">will generate: </span>
+                  <span className="text-lime font-mono text-xs">{getEffectiveDomain()}</span>
+                </div>
+              )}
+              <button
+                onClick={() => customTopic.trim() && setStep('type')}
+                disabled={!customTopic.trim()}
+                className="w-full py-3 bg-lime text-black font-bold font-mono text-sm hover:bg-lime-dim disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                CONTINUE →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* step 2 — type */}
+        {step === 'type' && domain && (
+          <div className="animate-slide-up">
+            <button onClick={()=>setStep(domain.isCustom?'custom':'domain')} className="text-white/25 font-mono text-xs hover:text-white transition-colors mb-6 block">← back</button>
+            <div className="text-lime font-mono text-xs mb-1">// step 02 · {getEffectiveDomain()}</div>
+            <h1 className="text-white font-bold font-mono text-2xl mb-7">Question Type</h1>
+
+            <div className="border border-g-border">
+              {domain.types.map((t, i) => (
+                <button key={t}
+                  onClick={() => { setType(t); setStep('diff') }}
+                  className={`w-full flex items-center gap-5 px-6 py-5 text-left hover:bg-g-800 transition-colors group ${i < domain.types.length-1?'border-b border-g-border':''}`}>
+                  <span className="text-lime/30 font-mono text-xl w-8 text-center group-hover:text-lime/60 transition-colors">{TYPE_META[t].icon}</span>
+                  <div className="flex-1">
                     <div className="text-white font-mono font-bold text-sm group-hover:text-lime transition-colors">{TYPE_META[t].label}</div>
                     <div className="text-white/30 font-mono text-xs mt-0.5">{TYPE_META[t].desc}</div>
                   </div>
-                  <span className="ml-auto text-white/20 group-hover:text-lime transition-colors font-mono text-xs">select →</span>
+                  <span className="text-white/20 group-hover:text-lime font-mono text-xs transition-colors">→</span>
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {/* Step: difficulty */}
+        {/* step 3 — difficulty */}
         {step === 'diff' && (
           <div className="animate-slide-up">
             <button onClick={()=>setStep('type')} className="text-white/25 font-mono text-xs hover:text-white transition-colors mb-6 block">← back</button>
-            <div className="text-lime text-xs font-mono mb-1">// step 03 · {domain?.label} · {TYPE_META[type]?.label}</div>
-            <h1 className="text-white font-bold font-mono text-2xl mb-6">Difficulty</h1>
-            <div className="grid grid-cols-3 gap-0 border border-g-border mb-6">
-              {DIFFS.map((d,i)=>(
-                <button key={d} onClick={()=>setDiff(d)}
-                  className={`py-5 font-mono font-bold text-sm border-r border-g-border last:border-r-0 transition-colors ${diff===d?'bg-lime text-black':'text-white/40 hover:text-white hover:bg-g-800'}`}>
-                  {d.toUpperCase()}
+            <div className="text-lime font-mono text-xs mb-1">// step 03 · {getEffectiveDomain()} · {TYPE_META[type]?.label}</div>
+            <h1 className="text-white font-bold font-mono text-2xl mb-7">Difficulty</h1>
+
+            <div className="border border-g-border mb-6">
+              {DIFFS.map((d, i) => (
+                <button key={d}
+                  onClick={() => setDiff(d)}
+                  className={`w-full flex items-center justify-between px-6 py-5 font-mono transition-colors ${i<DIFFS.length-1?'border-b border-g-border':''}
+                    ${diff===d?'bg-g-800 text-white border-l-2 border-lime':'text-white/40 hover:text-white hover:bg-g-800'}`}>
+                  <div>
+                    <div className="font-bold text-sm">{d.toUpperCase()}</div>
+                    <div className="text-xs opacity-40 mt-0.5">
+                      {d==='easy'?'fundamentals & basics':d==='medium'?'intermediate patterns':'advanced edge cases'}
+                    </div>
+                  </div>
+                  {diff === d && <span className="text-lime text-xs">selected ✓</span>}
                 </button>
               ))}
             </div>
-            {state.isAILoading
-              ? <div className="text-lime font-mono text-xs animate-pulse text-center py-4">loading...</div>
-              : <button onClick={launch} className="w-full py-3 bg-lime text-black font-bold font-mono text-sm hover:bg-lime-dim transition-colors">
-                  GENERATE CHALLENGE →
-                </button>
-            }
+
+            <button onClick={launch} disabled={state.isAILoading}
+              className="w-full py-3.5 bg-lime text-black font-bold font-mono text-sm hover:bg-lime-dim disabled:opacity-40 transition-colors">
+              {state.isAILoading ? 'generating…' : 'GENERATE CHALLENGE →'}
+            </button>
           </div>
         )}
       </div>

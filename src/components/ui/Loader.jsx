@@ -1,21 +1,8 @@
-export default function Loader({ message = 'Loading...' }) {
+export default function Loader({ message='loading...' }) {
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="relative w-12 h-12">
-        <svg className="w-12 h-12 -rotate-90" viewBox="0 0 48 48">
-          <circle cx="24" cy="24" r="20" fill="none" stroke="#1c1c2c" strokeWidth="3" />
-          <circle
-            cx="24" cy="24" r="20" fill="none"
-            stroke="#f59e0b" strokeWidth="3"
-            strokeDasharray="126"
-            strokeDashoffset="31"
-            strokeLinecap="round"
-            style={{ animation: 'spin 1s linear infinite' }}
-          />
-        </svg>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } } .relative svg { animation: spin 1s linear infinite; }`}</style>
-      </div>
-      <p className="text-white/50 text-sm font-mono">{message}</p>
+    <div className="flex flex-col items-center gap-5">
+      <div className="w-10 h-10 border-2 border-g-border border-t-lime animate-spin" style={{animationDuration:'0.8s'}} />
+      <span className="text-white/40 font-mono text-xs">{message}</span>
     </div>
   )
 }

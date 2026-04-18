@@ -172,7 +172,7 @@ export default function Session() {
       ? 'API key rejected. Check your key has credits.'
       : state.error
     return (
-      <div className="min-h-screen bg-arena-950 flex flex-col">
+      <div className="min-h-screen bg-g-950 flex flex-col">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4 text-center">
           <div className="text-3xl">{isKeyError ? '🔑' : '⚠️'}</div>
@@ -180,7 +180,7 @@ export default function Session() {
           {!isKeyError && (
             <button
               onClick={() => { dispatch({ type: 'SET_ERROR', payload: null }) }}
-              className="px-4 py-2 bg-amber-500 text-black text-sm font-bold rounded-lg"
+              className="px-4 py-2 bg-lime text-black text-sm font-bold "
             >Retry</button>
           )}
         </div>
@@ -190,7 +190,7 @@ export default function Session() {
 
   if (initLoading) {
     return (
-      <div className="min-h-screen bg-arena-950 flex flex-col">
+      <div className="min-h-screen bg-g-950 flex flex-col">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
           <Loader message="Loading session..." />
@@ -201,7 +201,7 @@ export default function Session() {
 
   if ((state.phase === 'idle' || (state.phase === 'reviewing' && !state.codeReview)) && state.isAILoading) {
     return (
-      <div className="min-h-screen bg-arena-950 flex flex-col">
+      <div className="min-h-screen bg-g-950 flex flex-col">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
           <Loader message="Analysing your code…" />
@@ -213,7 +213,7 @@ export default function Session() {
   // ── Phase 1: Review ────────────────────────────────────────────────
   if (state.phase === 'reviewing' && state.codeReview) {
     return (
-      <div className="min-h-screen bg-arena-950">
+      <div className="min-h-screen bg-g-950">
         <Navbar />
         <div className="max-w-3xl mx-auto px-4 py-10">
           <CodeReviewCard
@@ -229,7 +229,7 @@ export default function Session() {
   // ── generating questions loader ────────────────────────────────────
   if (state.phase === 'reviewing' && state.isAILoading) {
     return (
-      <div className="min-h-screen bg-arena-950 flex flex-col">
+      <div className="min-h-screen bg-g-950 flex flex-col">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
           <Loader message="Preparing your interview…" />
@@ -247,7 +247,7 @@ export default function Session() {
     // full-screen loader while evaluating answer
     if (state.isAILoading && !lastResult) {
       return (
-        <div className="min-h-screen bg-arena-950 flex flex-col">
+        <div className="min-h-screen bg-g-950 flex flex-col">
           <Navbar />
           <div className="flex-1 flex items-center justify-center">
             <Loader message="Evaluating your answer…" />
@@ -259,7 +259,7 @@ export default function Session() {
     // generating final report
     if (state.isAILoading && !currentQ) {
       return (
-        <div className="min-h-screen bg-arena-950 flex flex-col">
+        <div className="min-h-screen bg-g-950 flex flex-col">
           <Navbar />
           <div className="flex-1 flex items-center justify-center">
             <Loader message="Generating your report…" />
@@ -269,7 +269,7 @@ export default function Session() {
     }
 
     return (
-      <div className="min-h-screen bg-arena-950">
+      <div className="min-h-screen bg-g-950">
         <Navbar />
         <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
           <RoundCounter
@@ -287,7 +287,7 @@ export default function Session() {
                 value={answer}
                 onChange={e => setAnswer(e.target.value)}
                 placeholder="Type your answer here… or use the mic below."
-                className="w-full h-44 bg-arena-800 border border-arena-border text-white placeholder-white/20 rounded-xl p-5 resize-none focus:outline-none focus:border-amber-500/50 text-sm leading-relaxed"
+                className="w-full h-44 bg-g-800 border border-g-border text-white placeholder-white/20  p-5 resize-none focus:outline-none focus:border-lime/50 text-sm leading-relaxed"
               />
 
               <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -296,12 +296,12 @@ export default function Session() {
                     onTranscript={handleVoiceTranscript}
                     disabled={state.isAILoading}
                   />
-                  <span className="text-white/20 text-xs font-mono">{answer.length} chars</span>
+                  <span className="text-white/20 font-mono text-xs">{answer.length} chars</span>
                 </div>
                 <button
                   onClick={handleSubmitAnswer}
                   disabled={!answer.trim() || state.isAILoading}
-                  className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-black font-bold rounded-lg transition-colors text-sm"
+                  className="px-6 py-2.5 bg-lime hover:bg-lime-dim disabled:opacity-40 disabled:cursor-not-allowed text-black font-bold  transition-colors text-sm"
                 >
                   Submit →
                 </button>
@@ -311,31 +311,31 @@ export default function Session() {
 
           {/* Round result card */}
           {showingResult && lastResult && (
-            <div className="animate-slide-up bg-arena-800 border border-arena-border rounded-xl p-6 space-y-4">
+            <div className="animate-slide-up bg-g-800 border border-g-border  p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white/40 text-xs font-mono mb-0.5">
+                  <p className="text-white/40 font-mono text-xs mb-0.5">
                     Round {state.rounds.length} Score
                   </p>
                   <span className={`text-3xl font-bold font-mono ${getScoreColor(lastResult.score * 10)}`}>
                     {lastResult.score}<span className="text-lg text-white/20">/10</span>
                   </span>
                 </div>
-                <span className="px-3 py-1 bg-arena-600 border border-arena-border text-white/40 text-xs font-mono rounded-full">
+                <span className="px-3 py-1 bg-g-600 border border-g-border text-white/40 font-mono text-xs ">
                   {lastResult.concept}
                 </span>
               </div>
 
               <div>
-                <p className="text-amber-400 text-xs font-mono uppercase mb-1.5">Feedback</p>
+                <p className="text-yellow-400 font-mono text-xs uppercase mb-1.5">Feedback</p>
                 <p className="text-white/70 text-sm leading-relaxed">{lastResult.aiFeedback}</p>
               </div>
 
               <details>
-                <summary className="text-emerald-400 text-xs font-mono uppercase cursor-pointer hover:text-emerald-300 transition-colors">
+                <summary className="text-lime font-mono text-xs uppercase cursor-pointer hover:text-emerald-300 transition-colors">
                   View Ideal Answer ▾
                 </summary>
-                <p className="mt-2 text-white/50 text-sm pl-4 border-l border-emerald-400/30 italic leading-relaxed">
+                <p className="mt-2 text-white/50 text-sm pl-4 border-l border-lime/30 italic leading-relaxed">
                   {lastResult.idealAnswer}
                 </p>
               </details>
@@ -345,14 +345,14 @@ export default function Session() {
                 <button
                   onClick={handleGenerateReport}
                   disabled={state.isAILoading}
-                  className="w-full py-3 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-bold rounded-xl transition-colors text-sm"
+                  className="w-full py-3 bg-lime hover:bg-lime-dim disabled:opacity-50 text-black font-bold  transition-colors text-sm"
                 >
                   {state.isAILoading ? '⏳ Generating report…' : '📊 Get Full Report →'}
                 </button>
               ) : (
                 <button
                   onClick={handleNext}
-                  className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-lg transition-colors text-sm"
+                  className="px-6 py-2.5 bg-lime hover:bg-lime-dim text-black font-bold  transition-colors text-sm"
                 >
                   Next Round →
                 </button>
@@ -379,7 +379,7 @@ export default function Session() {
 
   // fallback loading state
   return (
-    <div className="min-h-screen bg-arena-950 flex flex-col">
+    <div className="min-h-screen bg-g-950 flex flex-col">
       <Navbar />
       <div className="flex-1 flex items-center justify-center">
         <Loader message="Loading…" />
