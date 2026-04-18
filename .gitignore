@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# env - NEVER push this
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# build
+dist/
+dist-ssr/
+
+# misc
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.vscode/
+.idea/
