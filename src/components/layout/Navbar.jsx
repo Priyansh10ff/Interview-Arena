@@ -1,13 +1,15 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
 import { useAuth } from '../../hooks/useAuth'
+import { useTheme } from '../../context/ThemeContext'
 import { useNavigate } from 'react-router-dom'
 
 export default function Navbar() {
-  const { user } = useAuthContext()
-  const { logout } = useAuth()
-  const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { user }          = useAuthContext()
+  const { logout }        = useAuth()
+  const { dark, toggle }  = useTheme()
+  const navigate          = useNavigate()
+  const { pathname }      = useLocation()
 
   async function handleLogout() {
     await logout()
@@ -16,14 +18,15 @@ export default function Navbar() {
 
   const NAV = [
     { to: '/dashboard', label: 'Dashboard' },
-    { to: '/history', label: 'History' },
-    { to: '/topic', label: 'Practice' },
-    { to: '/settings', label: 'Settings' },
+    { to: '/history',   label: 'History'   },
+    { to: '/topic',     label: 'Practice'  },
+    { to: '/bookmarks', label: 'Saved'     },
+    { to: '/settings',  label: 'Settings'  },
   ]
 
   return (
     <nav className="border-b border-g-border bg-g-950 sticky top-0 z-50">
-      <div className="max-w-5xl mx-auto px-4 h-13 flex items-center justify-between" style={{height:'52px'}}>
+      <div className="max-w-5xl mx-auto px-4 flex items-center justify-between" style={{ height: '52px' }}>
 
         {/* logo */}
         <Link to={user ? '/dashboard' : '/'} className="flex items-center gap-3 shrink-0">
@@ -37,35 +40,36 @@ export default function Navbar() {
 
         {user && (
           <div className="flex items-center gap-1">
-            {/* nav links */}
             {NAV.map(({ to, label }) => {
-              const active = pathname === to || (to === '/dashboard' && pathname === '/')
+              const active = pathname === to
               return (
                 <Link key={to} to={to}
-                  className={`px-3 py-1.5 font-mono text-xs transition-colors relative
+                  className={`px-3 py-1.5 font-mono text-xs transition-colors relative hidden sm:block
                     ${active
                       ? 'text-white bg-g-800 border border-g-border'
                       : 'text-white/35 hover:text-white/70 hover:bg-g-900'
                     }`}
                 >
                   {label}
-                  {active && (
-                    <span className="absolute bottom-0 left-0 right-0 h-px bg-lime"/>
-                  )}
+                  {active && <span className="absolute bottom-0 left-0 right-0 h-px bg-lime" />}
                 </Link>
               )
             })}
 
-            {/* divider */}
-            <div className="w-px h-4 bg-g-border mx-2"/>
+            <div className="w-px h-4 bg-g-border mx-1" />
 
-            {/* new session CTA */}
+            {/* theme toggle */}
+            <button onClick={toggle}
+              className="px-2.5 py-1.5 text-white/25 hover:text-white/70 font-mono text-xs transition-colors"
+              title={dark ? 'Light mode' : 'Dark mode'}>
+              {dark ? '☀' : '☾'}
+            </button>
+
             <Link to="/session/new"
-              className="px-4 py-1.5 bg-lime text-black font-bold font-mono text-xs hover:bg-lime-dim transition-colors whitespace-nowrap">
+              className="px-4 py-1.5 bg-lime text-black font-bold font-mono text-xs hover:bg-lime-dim transition-colors whitespace-nowrap ml-1">
               + New
             </Link>
 
-            {/* logout */}
             <button onClick={handleLogout}
               className="px-3 py-1.5 text-white/25 hover:text-white/60 font-mono text-xs transition-colors">
               ↩

@@ -1,5 +1,6 @@
+import React from 'react'
 import { useState, useRef } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import Navbar from '../components/layout/Navbar'
 import { useAuthContext } from '../context/AuthContext'
 import { useSession } from '../hooks/useSession'
@@ -61,6 +62,14 @@ export default function NewSession() {
   const { startSession } = useSession()
   const { dispatch } = useSessionContext()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // prefill from retry
+  React.useEffect(() => {
+    const s = location.state
+    if (s?.prefillCode) { setCode(s.prefillCode); setTab('paste') }
+    if (s?.prefillLang) setLang(s.prefillLang)
+  }, [])
 
   // ── file reading ────────────────────────────────────────────────────
   function readFile(file) {

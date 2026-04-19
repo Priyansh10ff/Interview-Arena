@@ -1,104 +1,175 @@
 <div align="center">
 
-# ⚔️ Interview Arena
+<br/>
 
-**AI-powered code interview trainer. Paste code → get reviewed → get grilled → get better.**
+```
+ ██╗ ███╗   ██╗ ████████╗ ███████╗ ██████╗  ██╗   ██╗ ██╗ ███████╗ ██╗    ██╗
+ ██║ ████╗  ██║    ██╔══╝ ██╔════╝ ██╔══██╗ ██║   ██║ ██║ ██╔════╝ ██║    ██║
+ ██║ ██╔██╗ ██║    ██║    █████╗   ██████╔╝ ██║   ██║ ██║ █████╗   ██║ █╗ ██║
+ ██║ ██║╚██╗██║    ██║    ██╔══╝   ██╔══██╗ ╚██╗ ██╔╝ ██║ ██╔══╝   ██║███╗██║
+ ██║ ██║ ╚████║    ██║    ███████╗ ██║  ██║  ╚████╔╝  ██║ ███████╗ ╚███╔███╔╝
+ ╚═╝ ╚═╝  ╚═══╝    ╚═╝    ╚══════╝ ╚═╝  ╚═╝   ╚═══╝   ╚═╝ ╚══════╝  ╚══╝╚══╝
 
-[![React](https://img.shields.io/badge/React-18-blue?style=flat-square)](https://react.dev)
-[![Firebase](https://img.shields.io/badge/Firebase-10-orange?style=flat-square)](https://firebase.google.com)
-[![Vite](https://img.shields.io/badge/Vite-5-purple?style=flat-square)](https://vitejs.dev)
-[![Tailwind](https://img.shields.io/badge/Tailwind-3-teal?style=flat-square)](https://tailwindcss.com)
+             ██╗   ██╗ ██╗   ██████╗  ████████╗  ██████╗
+             ╚██╗ ██╔╝ ██║  ██╔════╝     ██╔══╝ ██╔═══██╗
+              ╚████╔╝  ██║  ██║  ███╗    ██║    ██║   ██║
+               ╚██╔╝   ██║  ██║   ██║    ██║    ██║   ██║
+                ██║    ██║  ╚██████╔╝    ██║    ╚██████╔╝
+                ╚═╝    ╚═╝   ╚═════╝     ╚═╝     ╚═════╝
+```
+
+**AI-Powered Code Interview Trainer**
+
+*Paste your code → Get reviewed → Get grilled → Get better*
+
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react)](https://react.dev)
+[![Firebase](https://img.shields.io/badge/Firebase-10-FFCA28?style=flat-square&logo=firebase)](https://firebase.google.com)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite)](https://vitejs.dev)
+[![Tailwind](https://img.shields.io/badge/Tailwind-3-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
+[![OpenRouter](https://img.shields.io/badge/OpenRouter-GPT--4o--mini-412991?style=flat-square)](https://openrouter.ai)
 
 </div>
 
 ---
 
-## 🎯 What It Does
+## ✦ What is Interview Arena?
 
-Three modes to sharpen your interview skills:
+Interview Arena simulates a real technical interview — but on **your own code**, not generic problems.
 
-### 🔬 Code Session (main feature)
-1. **Paste any code** — Python, JS, Java, Go, whatever
-2. **AI reviews it** — health score (0-100), issues ranked by severity, refactored version
-3. **5-round interview** — AI asks questions *about your specific code* (not generic theory)
-4. **Full report** — grade + score breakdown + code fixes + personalised study roadmap
+Unlike LeetCode or mock interview platforms that give you pre-set questions, Interview Arena analyses whatever code *you* paste, then asks you questions specifically about *your* architecture, *your* decisions, and *your* weak spots.
 
-### 🎓 Topic Practice
-Choose a domain (DSA, React, System Design, SQL…) and question type:
-- **Coding** — LeetCode-style problem with live editor, timer, and hint system
-- **MCQ** — 5 multiple choice questions with instant feedback
-- **Descriptive** — 3 open-ended interview questions evaluated by AI
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        SESSION FLOW                             │
+│                                                                 │
+│  📋 Paste Code          →    AI reviews it (health score,       │
+│  🔬 Code Review              issues by severity, refactor)      │
+│                                                                 │
+│  🎯 5-Round Interview   →    Questions about YOUR specific       │
+│                              code — not generic theory          │
+│                                                                 │
+│  📊 Final Report        →    Grade + breakdown + code diff      │
+│                              + personalised study roadmap       │
+└─────────────────────────────────────────────────────────────────┘
+```
 
----
-
-## 🛠 Tech Stack
-
-| Layer | Tech |
-|---|---|
-| Frontend | React 18 + Vite 5 |
-| Styling | Tailwind CSS 3 (custom terminal theme) |
-| Routing | React Router 6 |
-| State | Context API + useReducer |
-| Auth | Firebase Authentication |
-| Database | Firestore |
-| AI | OpenRouter (gpt-4o-mini) or direct OpenAI |
-| Voice | Web Speech API (native browser) |
+Plus a full **Topic Practice** mode (DSA, React, System Design, SQL…) with Coding, MCQ, and Descriptive formats.
 
 ---
 
-## 🚀 Setup
+## ✦ Features
 
-### 1. Extract & install
+| Feature | Description |
+|---------|-------------|
+| 🔬 **AI Code Review** | Health score 0–100, issues ranked by severity, refactored version |
+| 🎯 **5-Round Interview** | Questions generated from *your* code, live scoring per round |
+| 📊 **Full Report** | Grade, score breakdown, unified code diff, study roadmap |
+| 📁 **File / Project Upload** | Upload individual files or an entire folder — AI analyses the whole project |
+| 🎓 **Topic Practice** | 12 domains, 3 question types (Coding/MCQ/Descriptive), custom topics with subtopics |
+| 💻 **Coding Editor** | Split-panel LeetCode-style editor with tab support, timer, and hint system |
+| 🎤 **Voice Input** | Speak your answers using the browser's native Speech Recognition |
+| ★ **Bookmarks** | Save any question for later review at `/bookmarks` |
+| 📅 **Activity Heatmap** | GitHub-style contribution calendar showing your practice streak |
+| 📈 **Weekly Progress** | This-week vs last-week score delta, struggled concepts |
+| 🔁 **Retry Same Code** | Re-run an interview on the same snippet with one click |
+| 🔗 **Share Report** | Copy report URL to clipboard — reports are shareable |
+| 🌗 **Dark / Light Mode** | Persistent theme toggle with full light-mode stylesheet |
+| 🔐 **Google + Email Auth** | Sign in with Google or email/password |
+
+---
+
+## ✦ Tech Stack
+
+```
+Frontend     React 18 + Vite 5
+Styling      Tailwind CSS 3 (custom terminal aesthetic — JetBrains Mono)
+Routing      React Router 6
+State        Context API + useReducer (AuthContext, SessionContext, BookmarkContext, ThemeContext)
+Auth         Firebase Authentication (Email/Password + Google OAuth)
+Database     Cloud Firestore
+AI           OpenRouter (gpt-4o-mini) or direct OpenAI
+Voice        Web Speech API (browser-native, no library)
+```
+
+---
+
+## ✦ React Concepts Coverage
+
+> *For academic evaluation — every concept is used in context, not just imported.*
+
+| Concept | Location |
+|---------|----------|
+| `useState` | Every interactive component |
+| `useEffect` | Auth listener, session init, streak data fetch, timer |
+| `useReducer` | `SessionContext`, `BookmarkContext` — state machines |
+| `useContext` | `AuthContext`, `SessionContext`, `BookmarkContext`, `ThemeContext` |
+| `useCallback` | `useSession` CRUD, `useAI`, all async handlers in `Session.jsx` |
+| `useMemo` | `StreakCalendar` grid, `WeeklyReport` aggregation, `CodeDiff` line diff, `Dashboard` stats |
+| `useRef` | `roundsRef` (stale closure fix), `mountedRef` (unmount safety), file inputs, code editor |
+| `useTransition` | `useAI.js` — marks `isAILoading=false` dispatch as non-urgent (React 18 concurrent) |
+| `React.lazy` + `Suspense` | Report, Settings, History, TopicSession, Bookmarks |
+| Controlled components | All form inputs |
+| Lifting state up | Session phase managed in context, passed down to sub-phases |
+| React Router v6 | All routing, protected routes, `navigate` with `state` (retry prefill) |
+| Conditional rendering | Phase gates throughout Session, loading screens, feature guards |
+
+---
+
+## ✦ Quick Start
+
+### 1 — Clone & Install
 
 ```bash
 cd interview-arena
 npm install
 ```
 
-### 2. Set up Firebase
+### 2 — Firebase Setup
 
-1. Go to [console.firebase.google.com](https://console.firebase.google.com) → **Create project**
-2. **Authentication** → Sign-in method → Enable **Email/Password**
-3. **Firestore Database** → Create database → **Start in test mode**
+1. [console.firebase.google.com](https://console.firebase.google.com) → **Create project**
+2. **Authentication** → Sign-in method → Enable **Email/Password** + **Google**
+   - For Google: set a support email and save
+3. **Firestore Database** → Create database → **Test mode**
 4. **Project Settings** → Your apps → **Add web app** → copy config
 
-### 3. Create Firestore composite index
+#### Firestore Index (required)
 
-Go to **Firestore → Indexes → Create index**:
+Go to **Firestore → Indexes → Create composite index**:
 
-| Field | |
-|---|---|
-| Collection ID | `sessions` |
-| Field 1 | `uid` — Ascending |
-| Field 2 | `createdAt` — Descending |
-| Query scope | Collection |
+```
+Collection:  sessions
+Field 1:     uid         (Ascending)
+Field 2:     createdAt   (Descending)
+Query scope: Collection
+```
 
-> ⚠️ Without this index, the dashboard shows an empty session list.
+> ⚠️ Without this index, the **History** page and **Dashboard** session list will be empty.
 
-### 4. Configure environment
+### 3 — Environment Variables
 
 ```bash
 cp .env.example .env
 ```
 
-Fill in `.env` with your Firebase config values:
+Fill in `.env`:
 
 ```env
-VITE_FIREBASE_API_KEY=...
-VITE_FIREBASE_AUTH_DOMAIN=...
-VITE_FIREBASE_PROJECT_ID=...
-VITE_FIREBASE_STORAGE_BUCKET=...
-VITE_FIREBASE_MESSAGING_SENDER_ID=...
-VITE_FIREBASE_APP_ID=...
+# Firebase (required)
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
 
-# Optional — or add key inside the app under Settings
-VITE_OPENROUTER_API_KEY=sk-or-...
+# AI key — pick one (or leave blank and add in Settings)
+VITE_OPENROUTER_API_KEY=sk-or-v1-...
 # VITE_OPENAI_API_KEY=sk-...
 ```
 
-> 💡 **No API key in `.env`?** Just leave it blank and add your OpenRouter/OpenAI key inside the app: go to **Settings** after signing up.
+> 💡 **No `.env` key?** Leave both blank. After signing up, go to **Settings** and paste your key there — it's stored in `localStorage` only, never sent to any server.
 
-### 5. Run
+### 4 — Run
 
 ```bash
 npm run dev
@@ -107,183 +178,187 @@ npm run dev
 
 ---
 
-## 🔑 API Key Setup
+## ✦ API Keys
 
-The app needs an AI key to function. Two ways to set it:
+Two options, same models:
 
-**Option A — Environment variable** (recommended for deployment)
-```env
-VITE_OPENROUTER_API_KEY=sk-or-v1-xxx   # cheaper, more models
-# or
-VITE_OPENAI_API_KEY=sk-xxx
-```
+| Provider | Key prefix | Get it at | Cost |
+|----------|-----------|-----------|------|
+| **OpenRouter** (recommended) | `sk-or-v1-...` | [openrouter.ai/keys](https://openrouter.ai/keys) | ~$0.15 / 1M tokens |
+| **OpenAI direct** | `sk-...` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | ~$0.15 / 1M tokens |
 
-**Option B — In-app settings** (no `.env` needed)
-1. Sign up → go to **Settings**
-2. Paste your key in the **API Key** section
-3. Key is stored in browser localStorage only — never sent to our servers
+Key priority: `VITE_OPENROUTER_API_KEY` → `VITE_OPENAI_API_KEY` → Settings (localStorage)
 
-Get keys:
-- OpenRouter: [openrouter.ai/keys](https://openrouter.ai/keys) — ~$0.15/1M tokens
-- OpenAI: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+**Cost per full session** (code review + 5 rounds + report): **~$0.003** (less than half a cent)
 
 ---
 
-## 📦 Build & Deploy
+## ✦ Deploy
 
-### Build for production
+### Vercel (recommended)
+
+```bash
+# Push to GitHub, then:
+# 1. vercel.com → Import repository
+# 2. Project Settings → Environment Variables → add all VITE_* vars
+# 3. Deploy
+npm run build   # test locally first
+```
+
+### Netlify
 
 ```bash
 npm run build
-# output in dist/
-```
-
-### Deploy to Vercel (recommended)
-
-1. Push code to GitHub (`.env` is gitignored — never committed)
-2. Import repo at [vercel.com](https://vercel.com)
-3. Add all environment variables in **Project Settings → Environment Variables**
-4. Deploy ✅
-
-### Deploy to Netlify
-
-```bash
-npm run build
-# drag dist/ folder to netlify.com/drop
-```
-
-Or connect GitHub repo and set build command to `npm run build`, output dir to `dist`.
-
----
-
-## 🗄 Firestore Data Structure
-
-```
-users/{uid}
-  displayName, email, createdAt, totalSessions, averageScore
-
-sessions/{sessionId}
-  uid, createdAt, status, difficulty, language, codeSnippet
-  codeReview: { healthScore, strengths, issues, refactoredCode, topicsToStudy }
-  questions: [{ question, concept }]
-  rounds: [{ question, concept, userAnswer, aiFeedback, idealAnswer, score }]
-  finalReport: { overallScore, interviewScore, codeScore, verdict, breakdown,
-                  weakConcepts, studyRoadmap, codeFixSuggestions }
+# Drag dist/ to netlify.com/drop
+# Or: connect repo, set build command = npm run build, publish dir = dist
 ```
 
 ---
 
-## 🗑 How to Delete Data
+## ✦ Project Structure
 
-### Delete your sessions (in-app)
-Go to **Settings → Data → Delete all session data**
+```
+src/
+├── App.jsx                         Routes + all context providers
+├── context/
+│   ├── AuthContext.jsx             Firebase auth state
+│   ├── SessionContext.jsx          Session state machine (idle→reviewing→interviewing→report)
+│   ├── BookmarkContext.jsx         Bookmark CRUD with useReducer
+│   └── ThemeContext.jsx            Dark/light mode with localStorage persistence
+├── hooks/
+│   ├── useAuth.js                  login / signup / googleSignIn / logout
+│   ├── useAI.js                    OpenRouter/OpenAI call wrapper + useTransition
+│   └── useSession.js               Firestore CRUD for sessions
+├── services/
+│   ├── firebase.js                 Firebase app init
+│   ├── firestore.js                All Firestore helpers
+│   └── openrouter.js               Key priority chain + callAI()
+├── utils/
+│   ├── promptBuilder.js            All AI prompts (token-optimised per call)
+│   └── scoreCalculator.js          Score formulas, grade, color helpers
+├── components/
+│   ├── layout/
+│   │   ├── Navbar.jsx              Sticky nav with active states + theme toggle
+│   │   └── ProtectedRoute.jsx      Auth guard
+│   ├── ui/
+│   │   ├── Loader.jsx              Spinning border loader
+│   │   ├── ScoreRing.jsx           Animated SVG score ring
+│   │   ├── TypingIndicator.jsx     3-dot blink animation
+│   │   ├── VoiceInput.jsx          Web Speech API mic button
+│   │   ├── BookmarkIcon.jsx        ★/☆ toggle with loading state
+│   │   └── GoogleButton.jsx        Google OAuth button with inline SVG icon
+│   ├── dashboard/
+│   │   ├── StreakCalendar.jsx       52-week activity heatmap (GitHub-style)
+│   │   └── WeeklyReport.jsx        This-week stats with delta vs last week
+│   ├── review/
+│   │   └── CodeReviewCard.jsx      Code review phases: strengths, issues, refactor
+│   ├── interview/
+│   │   ├── QuestionCard.jsx        Question display with round + concept badges
+│   │   └── RoundCounter.jsx        Round progress boxes with scores
+│   ├── report/
+│   │   ├── ScoreBreakdown.jsx      4-metric bar chart breakdown
+│   │   ├── QuestionReplay.jsx      Expandable Q&A replay with bookmark icons
+│   │   ├── CodeDiff.jsx            Unified line diff with +/− highlighting
+│   │   └── StudyRoadmap.jsx        Expandable study plan with resources
+│   └── topic/
+│       ├── CodingChallenge.jsx     Split-panel editor, timer, hint system
+│       ├── McqChallenge.jsx        5-question MCQ with instant feedback
+│       └── DescriptiveChallenge.jsx Open-ended Q&A with voice input
+└── pages/
+    ├── Landing.jsx                 Public landing page
+    ├── Login.jsx                   Email + Google sign-in
+    ├── Signup.jsx                  Email + Google sign-up
+    ├── Dashboard.jsx               Stats, heatmap, weekly report, recent sessions
+    ├── NewSession.jsx              Code paste + file/folder upload + config
+    ├── Session.jsx                 3-phase interview flow (review → interview → report trigger)
+    ├── Report.jsx                  Full report: scores, diff, roadmap, share/retry actions
+    ├── SessionHistory.jsx          All past sessions with grades
+    ├── Bookmarks.jsx               Saved questions library
+    ├── Settings.jsx                Profile, API key management, data deletion
+    └── TopicSession.jsx            Domain → type → difficulty → challenge wizard
+```
 
-### Delete all Firestore data (Firebase Console)
-1. Firebase Console → **Firestore Database**
-2. Click the three-dot menu on a collection → **Delete collection**
+---
 
-### Delete all Firestore data (CLI)
+## ✦ Token Budget
+
+| Call | Max tokens | When called |
+|------|-----------|-------------|
+| Code review | 1,400 | Once per session start |
+| Generate 5 questions | 500 | Once after review |
+| Evaluate answer | 350 | Per round (×5) |
+| Final report | 1,200 | Once at end |
+| Topic MCQ (5 Qs) | 600 | Topic practice |
+| Topic coding problem | 700 | Topic practice |
+| Topic descriptive eval | 200 | Per question (×3) |
+| Hint | 100 | On demand (coding mode) |
+
+**Full code session total: ~4,350 tokens ≈ $0.003**
+
+---
+
+## ✦ Data & Privacy
+
+- **API keys** stored in browser `localStorage` only — never transmitted to any server other than OpenRouter/OpenAI
+- **Code snippets** sent to OpenRouter/OpenAI for AI processing — subject to their privacy policies
+- **Session data** (code, Q&A, scores) stored in your Firebase project — you own it
+- **Delete your data**: Settings → Data → "Delete all session data" (batch-deletes from Firestore)
+
+---
+
+## ✦ Firestore Security Rules (Production)
+
+Replace test-mode rules before going live:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /sessions/{sessionId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.uid;
+    }
+    match /bookmarks/{bookmarkId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.uid;
+    }
+    match /users/{userId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
+    }
+  }
+}
+```
+
+---
+
+## ✦ How to Delete Data
+
+**In-app (your sessions only):**
+Settings → Data → "Delete all session data"
+
+**Firebase Console (everything):**
+Firestore Database → select collection → three-dot menu → Delete collection
+
+**Firebase CLI (full wipe):**
 ```bash
 npx firebase-tools login
 npx firebase-tools firestore:delete --all-collections --project YOUR_PROJECT_ID
 ```
 
-### Delete a user account
-Firebase Console → **Authentication → Users** → find user → **Delete**
-
----
-
-## 📁 Project Structure
-
-```
-src/
-├── App.jsx
-├── context/
-│   ├── AuthContext.jsx         Firebase auth state
-│   └── SessionContext.jsx      Session state machine (idle→reviewing→interviewing→report)
-├── hooks/
-│   ├── useAuth.js              login / signup / logout
-│   ├── useAI.js                OpenRouter/OpenAI call wrapper
-│   └── useSession.js           Firestore CRUD for sessions
-├── services/
-│   ├── firebase.js             Firebase init
-│   ├── firestore.js            CRUD helpers + deleteUserSessions
-│   └── openrouter.js           Key priority chain + callAI()
-├── utils/
-│   ├── promptBuilder.js        All AI prompts (token-optimised)
-│   └── scoreCalculator.js      Score formulas + grade/color helpers
-├── components/
-│   ├── layout/                 Navbar, ProtectedRoute
-│   ├── ui/                     Loader, ScoreRing, TypingIndicator, VoiceInput
-│   ├── review/                 CodeReviewCard
-│   ├── interview/              QuestionCard, RoundCounter
-│   ├── report/                 ScoreBreakdown, StudyRoadmap, CodeFixes, QuestionReplay
-│   └── topic/                  CodingChallenge, McqChallenge, DescriptiveChallenge
-└── pages/
-    ├── Landing.jsx
-    ├── Login.jsx / Signup.jsx
-    ├── Dashboard.jsx
-    ├── NewSession.jsx
-    ├── Session.jsx             3-phase interview flow
-    ├── Report.jsx
-    ├── SessionHistory.jsx
-    ├── Settings.jsx            Profile + API key + delete data
-    └── TopicSession.jsx        Domain practice (coding/MCQ/descriptive)
-```
-
----
-
-## 💰 Token Usage (per session)
-
-| Phase | Max tokens |
-|---|---|
-| Code review | ~1,400 |
-| Generate 5 questions | ~500 |
-| Evaluate answer (×5) | ~350 each |
-| Final report | ~1,200 |
-| **Total per session** | **~4,350 tokens** |
-
-At gpt-4o-mini pricing (~$0.15/1M input + $0.60/1M output), one full session costs roughly **$0.003** (less than half a cent).
-
----
-
-## ⚛️ React Concepts Used (for evaluation)
-
-| Concept | Location |
-|---|---|
-| `useState` | All interactive components |
-| `useEffect` | Firebase auth listener, session init, timer |
-| `useReducer` | SessionContext state machine |
-| `useContext` | AuthContext, SessionContext |
-| `useCallback` | useSession CRUD, useAI |
-| `useMemo` | Dashboard stats, CodeReviewCard issue sort |
-| `useRef` | Code textarea tab handler, rounds accumulator |
-| `React.lazy` + `Suspense` | Report, Settings, History, TopicSession |
-| Controlled components | All form inputs |
-| Lifting state up | Session phase managed in context |
-| React Router v6 | All routing + protected routes |
-| Conditional rendering | Phase gates throughout Session.jsx |
-
----
-
-## 🔒 Security Notes
-
-- API keys stored in env vars (never committed — `.env` is gitignored)
-- In-app key stored in `localStorage` only (never sent to our servers)
-- Firestore rules: set to **test mode** for development. For production, add rules:
-  ```
-  rules_version = '2';
-  service cloud.firestore {
-    match /databases/{database}/documents {
-      match /sessions/{id} {
-        allow read, write: if request.auth != null && request.auth.uid == resource.data.uid;
-      }
-    }
-  }
-  ```
+**Delete a user account:**
+Firebase Console → Authentication → Users → find user → Delete
 
 ---
 
 <div align="center">
-Built for the real interview grind. 🔥
+
+Built for the grind. ⚔️
+
+*This project is an academic submission. All AI processing is done via OpenRouter/OpenAI APIs.*
+
 </div>

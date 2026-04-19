@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useEffect, useState, useCallback } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import Navbar from '../components/layout/Navbar'
 import ScoreRing from '../components/ui/ScoreRing'
 import ScoreBreakdown from '../components/report/ScoreBreakdown'
 import StudyRoadmap from '../components/report/StudyRoadmap'
-import CodeFixes from '../components/report/CodeFixes'
+import CodeDiff from '../components/report/CodeDiff'
 import QuestionReplay from '../components/report/QuestionReplay'
 import Loader from '../components/ui/Loader'
 import { useSessionContext } from '../context/SessionContext'
@@ -13,30 +13,51 @@ import { getGrade } from '../utils/scoreCalculator'
 
 export default function Report() {
   const { sessionId } = useParams()
-  const { state } = useSessionContext()
+  const navigate = useNavigate()
+  const { state, dispatch } = useSessionContext()
   const { loadSession } = useSession()
-  const [loading, setLoading] = useState(false)
+  const [loading,   setLoading]   = useState(false)
+  const [copied,    setCopied]    = useState(false)
 
-  useEffect(()=>{
-    if(!state.finalReport&&sessionId){
+  useEffect(() => {
+    if (!state.finalReport && sessionId) {
       setLoading(true)
-      loadSession(sessionId).finally(()=>setLoading(false))
+      loadSession(sessionId).finally(() => setLoading(false))
     }
-  },[sessionId])
+  }, [sessionId])
 
-  if(loading) return (
+  // share — copy URL to clipboard
+  const handleShare = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
+  }, [])
+
+  // retry — go to NewSession with same code pre-filled via location state
+  const handleRetry = useCallback(() => {
+    dispatch({ type: 'RESET' })
+    navigate('/session/new', {
+      state: { prefillCode: state.codeSnippet, prefillLang: state.language }
+    })
+  }, [state.codeSnippet, state.language, navigate, dispatch])
+
+  if (loading) return (
     <div className="min-h-screen bg-g-950 flex flex-col">
-      <Navbar/>
+      <Navbar />
       <div className="flex-1 flex items-center justify-center">
-        <Loader message="loading report..."/>
+        <Loader message="loading report…" />
       </div>
     </div>
   )
 
-  const report=state.finalReport
-  if(!report) return (
+  const report = state.finalReport
+  if (!report) return (
     <div className="min-h-screen bg-g-950 flex flex-col">
-      <Navbar/>
+      <Navbar />
       <div className="flex-1 flex flex-col items-center justify-center gap-4">
         <p className="text-white/30 font-mono text-xs">report not found.</p>
         <Link to="/dashboard" className="text-lime font-mono text-xs hover:text-lime-dim transition-colors">← dashboard</Link>
@@ -44,11 +65,11 @@ export default function Report() {
     </div>
   )
 
-  const grade=getGrade(report.overallScore)
+  const grade = getGrade(report.overallScore)
 
   return (
     <div className="min-h-screen bg-g-950">
-      <Navbar/>
+      <Navbar />
       <div className="max-w-3xl mx-auto px-4 py-10">
 
         {/* breadcrumb */}
@@ -57,22 +78,22 @@ export default function Report() {
             <div className="text-lime font-mono text-xs mb-1">// session report</div>
             <div className="text-white/30 font-mono text-xs">{state.difficulty} · {state.language}</div>
           </div>
-          <Link to="/dashboard" className="text-white/25 font-mono text-xs hover:text-white transition-colors">← dashboard</Link>
+          <Link to="/dashboard" className="text-white/25 font-mono text-xs hover:text-white transition-colors">
+            ← dashboard
+          </Link>
         </div>
 
-        {/* hero score block */}
+        {/* score hero */}
         <div className="border border-g-border bg-g-900">
-
-          {/* scores row — equal sizes */}
           <div className="grid grid-cols-3 divide-x divide-g-border border-b border-g-border">
             <div className="py-6 flex flex-col items-center justify-center gap-3">
-              <ScoreRing score={report.overallScore} color={grade.ring} size={110} label="overall"/>
+              <ScoreRing score={report.overallScore} color={grade.ring} size={110} label="overall" />
             </div>
             <div className="py-6 flex flex-col items-center justify-center gap-3">
-              <ScoreRing score={report.interviewScore} color="#facc15" size={110} label="interview"/>
+              <ScoreRing score={report.interviewScore} color="#facc15" size={110} label="interview" />
             </div>
             <div className="py-6 flex flex-col items-center justify-center gap-3">
-              <ScoreRing score={report.codeScore} color="#a8ff3e" size={110} label="code"/>
+              <ScoreRing score={report.codeScore} color="#a8ff3e" size={110} label="code" />
             </div>
           </div>
 
@@ -83,9 +104,9 @@ export default function Report() {
               <span className={`font-mono text-sm ${grade.color}`}>{grade.label}</span>
             </div>
             <p className="text-white/55 font-mono text-xs leading-relaxed">{report.verdict}</p>
-            {report.weakConcepts?.length>0&&(
+            {report.weakConcepts?.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-4">
-                {report.weakConcepts.map((c,i)=>(
+                {report.weakConcepts.map((c, i) => (
                   <span key={i} className="border border-red-400/30 text-red-400/70 font-mono text-xs px-2.5 py-1">
                     ✕ {c}
                   </span>
@@ -95,22 +116,26 @@ export default function Report() {
           </div>
         </div>
 
-        {/* sections — all share the same top border */}
-        <ScoreBreakdown breakdown={report.breakdown}/>
-        <QuestionReplay rounds={state.rounds}/>
-        <CodeFixes fixes={report.codeFixSuggestions}/>
-        <StudyRoadmap roadmap={report.studyRoadmap}/>
+        {/* score breakdown, replay, code diff, roadmap */}
+        <ScoreBreakdown breakdown={report.breakdown} />
+        <QuestionReplay rounds={state.rounds} />
+        <CodeDiff fixes={report.codeFixSuggestions} />
+        <StudyRoadmap roadmap={report.studyRoadmap} />
 
-        {/* actions */}
-        <div className="border border-t-0 border-g-border grid grid-cols-2 divide-x divide-g-border">
+        {/* actions row */}
+        <div className="border border-t-0 border-g-border grid grid-cols-4 divide-x divide-g-border">
           <Link to="/session/new"
-            className="py-4 bg-lime text-black font-bold font-mono text-sm text-center hover:bg-lime-dim transition-colors">
+            className="col-span-2 py-4 bg-lime text-black font-bold font-mono text-sm text-center hover:bg-lime-dim transition-colors">
             NEW SESSION →
           </Link>
-          <Link to="/history"
-            className="py-4 text-white/40 font-mono text-sm text-center hover:bg-g-800 hover:text-white transition-colors">
-            HISTORY
-          </Link>
+          <button onClick={handleRetry}
+            className="py-4 text-white/40 font-mono text-xs text-center hover:bg-g-800 hover:text-white transition-colors">
+            RETRY SAME
+          </button>
+          <button onClick={handleShare}
+            className="py-4 text-white/40 font-mono text-xs text-center hover:bg-g-800 hover:text-white transition-colors">
+            {copied ? '✓ COPIED' : 'SHARE'}
+          </button>
         </div>
       </div>
     </div>
