@@ -53,3 +53,30 @@ export async function deleteUserSessions(uid) {
 export async function upsertUser(uid, data) {
   await setDoc(doc(db, 'users', uid), data, { merge: true })
 }
+
+// ── Arena (company interview) sessions ──────────────────────────────
+// Separate collection so the original code-review flow is untouched.
+export async function createArenaSession(uid, data) {
+  const ref = doc(collection(db, 'arenaSessions'))
+  await setDoc(ref, {
+    uid, createdAt: serverTimestamp(), status: 'live',
+    transcript: [], code: '', ...data,
+  })
+  return ref.id
+}
+export async function updateArenaSession(id, data) {
+  await updateDoc(doc(db, 'arenaSessions', id), data)
+}
+export async function getArenaSession(id) {
+  const snap = await getDoc(doc(db, 'arenaSessions', id))
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null
+}
+// uid filter only (no composite index needed); newest first client-side
+export async function getUserArenaSessions(uid, lim = 200) {
+  try {
+    const q = query(collection(db, 'arenaSessions'), where('uid', '==', uid), limit(lim))
+    const snap = await getDocs(q)
+    const ms = d => d.createdAt?.toMillis?.() ?? 0
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => ms(b) - ms(a))
+  } catch { return [] }
+}

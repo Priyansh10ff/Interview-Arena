@@ -5,11 +5,12 @@ const OPENAI_MODEL = 'gpt-4o-mini'
 const LS_KEY = 'ia_api_key'
 
 export function getApiKey() {
-  const orEnv = import.meta.env.VITE_OPENROUTER_API_KEY
+  const env = import.meta.env || {}
+  const orEnv = env.VITE_OPENROUTER_API_KEY
   if (orEnv) return { key: orEnv, source: 'env', type: 'openrouter' }
-  const oaiEnv = import.meta.env.VITE_OPENAI_API_KEY
+  const oaiEnv = env.VITE_OPENAI_API_KEY
   if (oaiEnv) return { key: oaiEnv, source: 'env', type: 'openai' }
-  const stored = localStorage.getItem(LS_KEY)
+  const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(LS_KEY) : null
   if (stored) {
     return { key: stored, source: 'localStorage', type: stored.startsWith('sk-or') ? 'openrouter' : 'openai' }
   }
@@ -20,7 +21,20 @@ export function hasApiKey() { return getApiKey() !== null }
 export function saveKeyToStorage(key) { localStorage.setItem(LS_KEY, key.trim()) }
 export function clearStoredKey() { localStorage.removeItem(LS_KEY) }
 
-export async function callAI(systemPrompt, userPrompt, maxTokens = 800) {
+// Pull a JSON object out of a model reply, tolerating code fences and stray prose.
+export function parseJSONLoose(content) {
+  const cleaned = (content || '').replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+  try { return JSON.parse(cleaned) } catch { /* fall through */ }
+  const first = cleaned.indexOf('{')
+  const last  = cleaned.lastIndexOf('}')
+  if (first !== -1 && last > first) {
+    try { return JSON.parse(cleaned.slice(first, last + 1)) } catch { /* fall through */ }
+  }
+  throw new Error('AI returned invalid JSON. Try again.')
+}
+
+// Multi-turn chat call. messages: [{ role: 'system'|'user'|'assistant', content }]
+export async function callAIChat(messages, maxTokens = 800, { temperature = 0.7 } = {}) {
   const apiKey = getApiKey()
   if (!apiKey) throw new Error('NO_KEY')
 
@@ -32,7 +46,7 @@ export async function callAI(systemPrompt, userPrompt, maxTokens = 800) {
     'Authorization': `Bearer ${apiKey.key}`,
     'Content-Type': 'application/json',
   }
-  if (isOpenRouter) {
+  if (isOpenRouter && typeof window !== 'undefined') {
     headers['HTTP-Referer'] = window.location.origin
     headers['X-Title'] = 'Interview Arena'
   }
@@ -40,15 +54,7 @@ export async function callAI(systemPrompt, userPrompt, maxTokens = 800) {
   const response = await fetch(url, {
     method: 'POST',
     headers,
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.7,
-      max_tokens: maxTokens,
-    }),
+    body: JSON.stringify({ model, messages, temperature, max_tokens: maxTokens }),
   })
 
   if (!response.ok) {
@@ -58,12 +64,15 @@ export async function callAI(systemPrompt, userPrompt, maxTokens = 800) {
   }
 
   const data = await response.json()
-  const content = data.choices?.[0]?.message?.content || ''
-  const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+  return parseJSONLoose(data.choices?.[0]?.message?.content || '')
+}
 
-  try {
-    return JSON.parse(cleaned)
-  } catch {
-    throw new Error('AI returned invalid JSON. Try again.')
-  }
+export async function callAI(systemPrompt, userPrompt, maxTokens = 800) {
+  return callAIChat(
+    [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    maxTokens
+  )
 }

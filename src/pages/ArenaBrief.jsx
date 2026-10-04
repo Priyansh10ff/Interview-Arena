@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useAuthContext } from '../context/AuthContext'
+import { createArenaSession } from '../services/firestore'
+import { hasApiKey } from '../services/openrouter'
 import Navbar from '../components/layout/Navbar'
 import { getCompany, getRound, FORMAT_DISCLAIMER } from '../data/companies'
 import { getRoundType } from '../data/roundTypes'
@@ -10,12 +13,32 @@ export const LEVELS = [
   { v: 'sde2',   label: 'SDE-2' },
 ]
 
-export default function ArenaBrief({ renderStart }) {
+export default function ArenaBrief() {
   const { companyId, roundId } = useParams()
   const company = getCompany(companyId)
   const round   = getRound(companyId, roundId)
   const type    = round ? getRoundType(round.type) : null
   const [level, setLevel] = useState('intern')
+  const [starting, setStarting] = useState(false)
+  const [err, setErr] = useState('')
+  const { user } = useAuthContext()
+  const navigate = useNavigate()
+  const keyOk = hasApiKey()
+
+  async function handleStart() {
+    if (starting) return
+    setStarting(true); setErr('')
+    try {
+      const id = await createArenaSession(user.uid, {
+        companyId, roundId, level, roundType: round.type,
+        companyName: company.name, roundTitle: round.title,
+      })
+      navigate(`/arena/session/${id}`)
+    } catch (e) {
+      setErr(e.message || 'Could not start the session.')
+      setStarting(false)
+    }
+  }
 
   if (!company || !round) {
     return (
@@ -85,8 +108,18 @@ export default function ArenaBrief({ renderStart }) {
               </button>
             ))}
           </div>
-          {renderStart?.({ company, round, level })}
+          {keyOk ? (
+            <button onClick={handleStart} disabled={starting}
+              className="px-6 py-2.5 bg-lime text-black font-bold font-mono text-xs hover:bg-lime-dim disabled:opacity-50 transition-colors">
+              {starting ? 'starting…' : 'START INTERVIEW →'}
+            </button>
+          ) : (
+            <Link to="/settings" className="px-4 py-2 border border-yellow-400/40 text-yellow-400 font-mono text-xs">
+              add an API key to start →
+            </Link>
+          )}
         </div>
+        {err && <p className="text-red-400 font-mono text-xs">{err}</p>}
 
         <p className="text-white/20 font-mono text-xs">{FORMAT_DISCLAIMER}</p>
       </div>
