@@ -14,7 +14,8 @@ export default function Landing() {
       {/* nav */}
       <nav className="border-b border-g-border px-6 h-12 flex items-center justify-between max-w-5xl mx-auto">
         <span className="text-lime font-bold font-mono text-sm">[IA]</span>
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
+          <Link to="/pricing" className="text-white/40 hover:text-white text-xs font-mono transition-colors">pricing</Link>
           {user
             ? <Link to="/dashboard" className="px-3 py-1 bg-lime text-black text-xs font-bold font-mono">dashboard →</Link>
             : <>
@@ -46,9 +47,39 @@ export default function Landing() {
           <Link to="/signup" className="px-6 py-3 bg-lime text-black font-bold font-mono text-sm hover:bg-lime-dim transition-colors">
             START FREE →
           </Link>
+          <Link to="/arena" className="px-6 py-3 border border-lime/40 text-lime font-mono text-sm hover:bg-g-800 transition-colors">
+            COMPANY ROUNDS
+          </Link>
           <Link to="/topic" className="px-6 py-3 border border-g-border text-white/50 hover:text-white font-mono text-sm hover:border-g-hi transition-colors">
             PRACTICE BY TOPIC
           </Link>
+        </div>
+      </div>
+
+      {/* arena pro */}
+      <div className="max-w-4xl mx-auto px-6 pb-16">
+        <div className="border border-lime/30 bg-g-900 p-8">
+          <div className="text-lime font-mono text-xs mb-3">// new · arena pro</div>
+          <h2 className="text-white font-mono font-bold text-2xl md:text-3xl leading-tight mb-3">
+            Real company rounds.<br />A live interviewer that talks back.
+          </h2>
+          <p className="text-white/40 font-mono text-xs leading-relaxed max-w-xl mb-5">
+            Flipkart machine coding. Amazon bar raiser. Razorpay LLD. Google phone screen. The AI plays the interviewer,
+            pushes on vague answers, throws a mid-round twist, then writes a rubric scorecard with a hire / no-hire verdict.
+          </p>
+          <div className="flex flex-wrap gap-2 mb-6">
+            {['Google', 'Amazon', 'Microsoft', 'Atlassian', 'Flipkart', 'Razorpay', 'Swiggy', 'Uber', 'AI startups'].map(c => (
+              <span key={c} className="border border-g-border text-white/50 font-mono text-xs px-2 py-0.5">{c}</span>
+            ))}
+          </div>
+          <div className="flex gap-3 flex-wrap">
+            <Link to={user ? '/arena' : '/signup'} className="px-5 py-2.5 bg-lime text-black font-bold font-mono text-xs hover:bg-lime-dim">
+              TRY 3 ROUNDS FREE →
+            </Link>
+            <Link to="/pricing" className="px-5 py-2.5 border border-g-border text-white/50 hover:text-white font-mono text-xs">
+              PRO · ₹299/MONTH
+            </Link>
+          </div>
         </div>
       </div>
 

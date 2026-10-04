@@ -78,6 +78,48 @@ Plus a full **Topic Practice** mode (DSA, React, System Design, SQL…) with Cod
 
 ---
 
+## ✦ Arena Pro: company interview rounds
+
+Practise the actual round formats companies run, with a live AI interviewer that stays in character.
+
+```
+Pick a company  →  Read the brief + rubric  →  Live interview (text or voice)  →  Scorecard + hire verdict
+```
+
+| Feature | Description |
+|---------|-------------|
+| 🏢 **9 company tracks** | Google, Amazon, Microsoft, Atlassian, Flipkart, Razorpay, Swiggy, Uber, AI startup |
+| 🧩 **6 round types** | DSA, machine coding, LLD, system design, behavioral, project deep-dive |
+| 🎭 **Live interviewer** | Company persona, one question at a time, pushes on vague answers, mid-round twist, wraps up on a time/turn budget |
+| 💻 **Split editor** | Code rounds send your latest editor snapshot with every reply |
+| 🔊 **Voice** | Interviewer speaks (Web Speech synthesis), you answer by mic |
+| 📋 **Rubric scorecard** | Each criterion scored 1-4 with evidence from the transcript and a concrete tip |
+| ⚖️ **Hire verdict** | Strong Hire / Hire / Lean No / No Hire computed from rubric weights; a 1 on a heavy criterion caps the verdict |
+| 📈 **Readiness** | Per-company readiness across the whole loop, weakest rubric areas |
+| 💳 **Plans** | Free: 3 rounds/month. Pro: unlimited (₹299/month). Upgrade button records early-access interest until payments ship |
+
+Round formats are modelled on publicly shared candidate experiences; real loops vary by team, level and year.
+
+### Arena data model
+
+```
+arenaSessions/{id}   uid, companyId, roundId, level, status (live → ended → scored),
+                     transcript[], code, startedAt, endedAt, scorecard{criteria, verdict, …}
+users/{uid}.plan     'free' | 'pro'
+upgradeInterest/{uid} who clicked "Get Pro" (demand signal before building checkout)
+```
+
+### Tests
+
+```bash
+npm test        # vitest: engine, scorecard, readiness, plans, data integrity + UI flow tests
+```
+
+> ⚠️ **Before charging money:** plan limits are currently enforced in the client. Move session creation
+> behind a Cloud Function (or similar) and add Razorpay checkout + webhook that sets `users/{uid}.plan`.
+
+---
+
 ## ✦ Tech Stack
 
 ```
@@ -327,8 +369,20 @@ service cloud.firestore {
         && request.auth.uid == request.resource.data.uid;
     }
     match /users/{userId} {
-      allow read, write: if request.auth != null
-        && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // users can edit their profile but never their own plan
+      allow write: if request.auth != null && request.auth.uid == userId
+        && (!('plan' in request.resource.data)
+            || (resource != null && request.resource.data.plan == resource.data.plan));
+    }
+    match /arenaSessions/{id} {
+      allow read, update, delete: if request.auth != null
+        && request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.uid;
+    }
+    match /upgradeInterest/{userId} {
+      allow create, update: if request.auth != null && request.auth.uid == userId;
     }
   }
 }

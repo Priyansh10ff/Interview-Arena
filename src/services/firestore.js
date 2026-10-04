@@ -44,10 +44,11 @@ export async function getSessionDates(uid) {
   } catch { return [] }
 }
 export async function deleteUserSessions(uid) {
-  const q    = query(collection(db, 'sessions'), where('uid', '==', uid))
-  const snap = await getDocs(q)
   const batch = writeBatch(db)
-  snap.docs.forEach(d => batch.delete(d.ref))
+  for (const name of ['sessions', 'arenaSessions']) {
+    const snap = await getDocs(query(collection(db, name), where('uid', '==', uid)))
+    snap.docs.forEach(d => batch.delete(d.ref))
+  }
   await batch.commit()
 }
 export async function upsertUser(uid, data) {
