@@ -17,6 +17,11 @@ const SessionHistory = lazy(() => import('./pages/SessionHistory'))
 const Settings       = lazy(() => import('./pages/Settings'))
 const TopicSession   = lazy(() => import('./pages/TopicSession'))
 const Bookmarks      = lazy(() => import('./pages/Bookmarks'))
+const Arena          = lazy(() => import('./pages/Arena'))
+const ArenaBrief     = lazy(() => import('./pages/ArenaBrief'))
+const ArenaSession   = lazy(() => import('./pages/ArenaSession'))
+const ArenaReport    = lazy(() => import('./pages/ArenaReport'))
+const Pricing        = lazy(() => import('./pages/Pricing'))
 
 function Fallback() {
   return (
@@ -43,6 +48,7 @@ export default function App() {
                 <Route path="/"                  element={<Landing />} />
                 <Route path="/login"             element={<Login />} />
                 <Route path="/signup"            element={<Signup />} />
+                <Route path="/pricing"           element={<Suspense fallback={<Fallback />}><Pricing /></Suspense>} />
                 <Route path="/dashboard"         element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/session/new"       element={<ProtectedRoute><NewSession /></ProtectedRoute>} />
                 <Route path="/session/:sessionId" element={<ProtectedRoute><Session /></ProtectedRoute>} />
@@ -51,6 +57,10 @@ export default function App() {
                 <Route path="/settings"          element={<Guard><Settings /></Guard>} />
                 <Route path="/topic"             element={<Guard><TopicSession /></Guard>} />
                 <Route path="/bookmarks"         element={<Guard><Bookmarks /></Guard>} />
+                <Route path="/arena"             element={<Guard><Arena /></Guard>} />
+                <Route path="/arena/session/:sessionId" element={<Guard><ArenaSession /></Guard>} />
+                <Route path="/arena/report/:sessionId" element={<Guard><ArenaReport /></Guard>} />
+                <Route path="/arena/:companyId/:roundId" element={<Guard><ArenaBrief /></Guard>} />
               </Routes>
             </SessionProvider>
           </BookmarkProvider>

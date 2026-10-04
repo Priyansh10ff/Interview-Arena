@@ -44,12 +44,52 @@ export async function getSessionDates(uid) {
   } catch { return [] }
 }
 export async function deleteUserSessions(uid) {
-  const q    = query(collection(db, 'sessions'), where('uid', '==', uid))
-  const snap = await getDocs(q)
   const batch = writeBatch(db)
-  snap.docs.forEach(d => batch.delete(d.ref))
+  for (const name of ['sessions', 'arenaSessions']) {
+    const snap = await getDocs(query(collection(db, name), where('uid', '==', uid)))
+    snap.docs.forEach(d => batch.delete(d.ref))
+  }
   await batch.commit()
 }
 export async function upsertUser(uid, data) {
   await setDoc(doc(db, 'users', uid), data, { merge: true })
+}
+
+// ── Arena (company interview) sessions ──────────────────────────────
+// Separate collection so the original code-review flow is untouched.
+export async function createArenaSession(uid, data) {
+  const ref = doc(collection(db, 'arenaSessions'))
+  await setDoc(ref, {
+    uid, createdAt: serverTimestamp(), status: 'live',
+    transcript: [], code: '', ...data,
+  })
+  return ref.id
+}
+export async function updateArenaSession(id, data) {
+  await updateDoc(doc(db, 'arenaSessions', id), data)
+}
+export async function getArenaSession(id) {
+  const snap = await getDoc(doc(db, 'arenaSessions', id))
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null
+}
+// uid filter only (no composite index needed); newest first client-side
+export async function getUserArenaSessions(uid, lim = 200) {
+  try {
+    const q = query(collection(db, 'arenaSessions'), where('uid', '==', uid), limit(lim))
+    const snap = await getDocs(q)
+    const ms = d => d.createdAt?.toMillis?.() ?? 0
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => ms(b) - ms(a))
+  } catch { return [] }
+}
+
+// ── Plans / monetisation ────────────────────────────────────────────
+export async function getUserPlan(uid) {
+  try {
+    const snap = await getDoc(doc(db, 'users', uid))
+    return snap.exists() ? snap.data().plan || 'free' : 'free'
+  } catch { return 'free' }
+}
+// "Upgrade" interest until payments are live: tells you who would pay.
+export async function recordUpgradeInterest(uid, email, plan = 'pro') {
+  await setDoc(doc(db, 'upgradeInterest', uid), { uid, email: email || null, plan, at: serverTimestamp() }, { merge: true })
 }
