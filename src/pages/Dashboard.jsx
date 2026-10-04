@@ -6,7 +6,9 @@ import WeeklyReport from '../components/dashboard/WeeklyReport'
 import { useAuthContext } from '../context/AuthContext'
 import { useBookmarks } from '../context/BookmarkContext'
 import { useTheme } from '../context/ThemeContext'
-import { getUserSessions, getSessionDates } from '../services/firestore'
+import { getUserSessions, getSessionDates, getUserArenaSessions } from '../services/firestore'
+import { COMPANIES } from '../data/companies'
+import { readinessMap } from '../utils/readiness'
 import { getGrade, getScoreColor } from '../utils/scoreCalculator'
 import { hasApiKey } from '../services/openrouter'
 
@@ -53,6 +55,7 @@ export default function Dashboard() {
   const [sessions, setSessions] = useState([])
   const [dates,    setDates]    = useState([])
   const [loading,  setLoading]  = useState(true)
+  const [arena,    setArena]    = useState([])
   const keyOk = hasApiKey()
 
   useEffect(() => {
@@ -65,6 +68,7 @@ export default function Dashboard() {
       setDates(d)
       setLoading(false)
     })
+    getUserArenaSessions(user.uid).then(setArena)
     if (!bLoaded) loadBookmarks(user.uid)
   }, [user])
 
@@ -75,6 +79,12 @@ export default function Dashboard() {
       : 0
     return { total: sessions.length, done: done.length, avg }
   }, [sessions])
+
+  const readiness = useMemo(() => {
+    const map = readinessMap(arena, COMPANIES)
+    return COMPANIES.filter(c => map[c.id]).map(c => ({ ...c, r: map[c.id] }))
+      .sort((a, b) => b.r.percent - a.r.percent).slice(0, 4)
+  }, [arena])
 
   return (
     <div className="min-h-screen bg-g-950">
@@ -110,6 +120,29 @@ export default function Dashboard() {
             </Link>
           </div>
         </div>
+
+        {/* arena readiness */}
+        <Link to="/arena" className="block border border-lime/30 bg-g-900 hover:bg-g-800 p-5 transition-colors group">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-lime font-mono text-xs">// company readiness</span>
+            <span className="text-white/25 group-hover:text-lime font-mono text-xs transition-colors">arena →</span>
+          </div>
+          {readiness.length === 0 ? (
+            <p className="text-white/50 font-mono text-xs">
+              Practise real rounds from Google, Amazon, Flipkart, Razorpay and more with a live AI interviewer.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {readiness.map(c => (
+                <div key={c.id}>
+                  <div className="text-white/40 font-mono text-xs">{c.name}</div>
+                  <div className="text-white font-mono font-bold text-xl">{c.r.percent}%</div>
+                  <div className="h-1 bg-g-700 mt-1"><div className="h-1 bg-lime" style={{ width: `${c.r.percent}%` }} /></div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Link>
 
         {/* weekly report */}
         <WeeklyReport sessions={sessions} />

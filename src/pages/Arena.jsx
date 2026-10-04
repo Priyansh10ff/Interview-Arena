@@ -1,6 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/layout/Navbar'
+import { useAuthContext } from '../context/AuthContext'
+import { getUserArenaSessions } from '../services/firestore'
+import { readinessMap, weakestCriteria } from '../utils/readiness'
+import { VERDICTS } from '../utils/scorecard'
 import { COMPANIES, FORMAT_DISCLAIMER } from '../data/companies'
 import { getRoundType } from '../data/roundTypes'
 
@@ -11,9 +15,19 @@ const TIERS = [
   { v: 'startup',  label: 'STARTUP' },
 ]
 
-export default function Arena({ readiness = {} }) {
+export default function Arena() {
   const [tier, setTier] = useState('all')
   const [openId, setOpenId] = useState(null)
+  const [sessions, setSessions] = useState([])
+  const { user } = useAuthContext()
+
+  useEffect(() => {
+    if (user) getUserArenaSessions(user.uid).then(setSessions)
+  }, [user])
+
+  const readiness = useMemo(() => readinessMap(sessions, COMPANIES), [sessions])
+  const weak      = useMemo(() => weakestCriteria(sessions), [sessions])
+  const recent    = useMemo(() => sessions.filter(s => s.status === 'scored').slice(0, 4), [sessions])
 
   const list = useMemo(
     () => COMPANIES.filter(c => tier === 'all' || c.tier === tier),
@@ -44,6 +58,32 @@ export default function Arena({ readiness = {} }) {
           ))}
         </div>
 
+        {(weak.length > 0 || recent.length > 0) && (
+          <div className="border border-g-border bg-g-900 grid grid-cols-1 md:grid-cols-2 md:divide-x divide-g-border">
+            <div className="p-4">
+              <div className="text-white/30 font-mono text-xs mb-2">weakest rubric areas</div>
+              {weak.length ? weak.map(w => (
+                <div key={w.label} className="flex justify-between font-mono text-xs py-0.5">
+                  <span className="text-white/70">{w.label}</span>
+                  <span className={w.avg < 2.5 ? 'text-red-400' : 'text-yellow-400'}>{w.avg}/4</span>
+                </div>
+              )) : <p className="text-white/25 font-mono text-xs">do a few more rounds to see patterns.</p>}
+            </div>
+            <div className="p-4 border-t md:border-t-0 border-g-border">
+              <div className="text-white/30 font-mono text-xs mb-2">recent scorecards</div>
+              {recent.map(s => {
+                const v = VERDICTS[s.scorecard.verdict.key]
+                return (
+                  <Link key={s.id} to={`/arena/report/${s.id}`} className="flex justify-between font-mono text-xs py-0.5 hover:bg-g-800">
+                    <span className="text-white/60 truncate">{s.companyName} · {s.roundTitle}</span>
+                    <span className={`${v.color} shrink-0 ml-2`}>{v.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {list.map(c => {
             const open = openId === c.id
@@ -65,9 +105,9 @@ export default function Arena({ readiness = {} }) {
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    {r != null
-                      ? <><div className="text-lime font-mono font-bold text-lg">{r}%</div>
-                          <div className="text-white/25 font-mono text-xs">ready</div></>
+                    {r
+                      ? <><div className="text-lime font-mono font-bold text-lg">{r.percent}%</div>
+                          <div className="text-white/25 font-mono text-xs">ready · {r.attempted}/{r.total}</div></>
                       : <div className="text-white/20 font-mono text-xs">not started</div>}
                   </div>
                 </button>
@@ -76,6 +116,7 @@ export default function Arena({ readiness = {} }) {
                   <div className="border-t border-g-border divide-y divide-g-border animate-fade-in">
                     {c.rounds.map(rd => {
                       const t = getRoundType(rd.type)
+                      const st = r?.rounds[rd.id]
                       return (
                         <Link key={rd.id} to={`/arena/${c.id}/${rd.id}`}
                           className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-g-800 transition-colors group">
@@ -87,7 +128,9 @@ export default function Arena({ readiness = {} }) {
                             <div className="text-white/30 font-mono text-xs mt-1 truncate">{rd.brief}</div>
                           </div>
                           <div className="shrink-0 text-right">
-                            <div className="text-white/40 font-mono text-xs">{rd.durationMin} min</div>
+                            <div className="text-white/40 font-mono text-xs">
+                              {st ? <span className={VERDICTS[st.lastVerdict].color}>{st.percent}% · </span> : null}{rd.durationMin} min
+                            </div>
                             <div className="text-white/20 group-hover:text-lime font-mono text-xs transition-colors">brief →</div>
                           </div>
                         </Link>
