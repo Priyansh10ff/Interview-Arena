@@ -7,6 +7,7 @@ import DescriptiveChallenge from '../components/topic/DescriptiveChallenge'
 import { useAI } from '../hooks/useAI'
 import { useSessionContext } from '../context/SessionContext'
 import { hasApiKey } from '../services/openrouter'
+import { normalizeTopicChallenge } from '../utils/topicChallenge'
 import {
   buildCodingProblemPrompt,
   buildMcqPrompt,
@@ -46,6 +47,7 @@ export default function TopicSession() {
   const [data, setData] = useState(null)
   const [score, setScore] = useState(null)
   const [feedback, setFeedback] = useState(null)
+  const [error, setError] = useState('')
   const { runAI } = useAI()
   const { state } = useSessionContext()
 
@@ -56,8 +58,9 @@ export default function TopicSession() {
   }
 
   async function launch() {
-    if (!hasApiKey()) { alert('Add your API key in Settings first.'); return }
+    if (!hasApiKey()) { setError('Add your API key in Settings first.'); return }
     if (domain?.isCustom && !customTopic.trim()) return
+    setError('')
     setStep('loading')
     try {
       const domLabel = getEffectiveDomain()
@@ -66,9 +69,13 @@ export default function TopicSession() {
       else if (type === 'descriptive') prompt = buildDescriptivePrompt(domLabel, diff)
       else prompt = buildCodingProblemPrompt(domLabel, diff)
       const result = await runAI(prompt.system, prompt.user, prompt.maxTokens)
-      setData(result)
+      setData(normalizeTopicChallenge(type, result))
       setStep('challenge')
-    } catch { setStep('diff') }
+    } catch (e) {
+      setError(e.message === 'NO_KEY' ? 'Add your API key in Settings first.'
+        : e.message === 'INVALID_KEY' ? 'Your API key was rejected.' : e.message || 'Generation failed. Try again.')
+      setStep('diff')
+    }
   }
 
   function onResult(s, fb) { setScore(s); setFeedback(fb); setStep('result') }
@@ -258,6 +265,11 @@ export default function TopicSession() {
               ))}
             </div>
 
+            {error && (
+              <p className="text-red-400 font-mono text-xs border border-red-400/20 px-3 py-2 mb-3">
+                {error} {/settings/i.test(error) && <Link to="/settings" className="underline">go →</Link>}
+              </p>
+            )}
             <button onClick={launch} disabled={state.isAILoading}
               className="w-full py-3.5 bg-lime text-black font-bold font-mono text-sm hover:bg-lime-dim disabled:opacity-40 transition-colors">
               {state.isAILoading ? 'generating…' : 'GENERATE CHALLENGE →'}

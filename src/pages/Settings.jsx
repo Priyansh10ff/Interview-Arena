@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { sendPasswordResetEmail, updateProfile } from 'firebase/auth'
 import { auth } from '../services/firebase'
-import { deleteUserSessions } from '../services/firestore'
+import { deleteUserSessions, upsertUser } from '../services/firestore'
 import { getApiKey, saveKeyToStorage, clearStoredKey, hasApiKey } from '../services/openrouter'
 import Navbar from '../components/layout/Navbar'
 import { useAuthContext } from '../context/AuthContext'
@@ -33,6 +33,7 @@ export default function Settings() {
 
   const [resetMsg, setResetMsg] = useState('')
   const [deletingData, setDeletingData] = useState(false)
+  const [deleteErr, setDeleteErr] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   async function saveName() {
@@ -40,7 +41,8 @@ export default function Settings() {
     setNameSaving(true)
     try {
       await updateProfile(auth.currentUser, { displayName: name.trim() })
-      setNameMsg('saved.')
+      await upsertUser(user.uid, { displayName: name.trim() })  // keep the Firestore profile in sync
+      setNameMsg('saved. (refresh to update the header)')
       setTimeout(() => setNameMsg(''), 2000)
     } catch { setNameMsg('error.') }
     finally { setNameSaving(false) }
@@ -56,7 +58,7 @@ export default function Settings() {
 
   function saveNewKey() {
     const k = newKey.trim()
-    if (!k.startsWith('sk-')) { setKeyMsg('key must start with sk- or sk-or-'); return }
+    if (!/^sk-[A-Za-z0-9_\-]{20,}$/.test(k)) { setKeyMsg('that does not look like an OpenRouter (sk-or-…) or OpenAI (sk-…) key'); return }
     saveKeyToStorage(k)
     setNewKey('')
     setKeyMsg('key saved.')
@@ -72,12 +74,16 @@ export default function Settings() {
   async function deleteData() {
     if (!confirmDelete) { setConfirmDelete(true); return }
     setDeletingData(true)
+    setDeleteErr('')
     try {
       await deleteUserSessions(user.uid)
       setConfirmDelete(false)
       setDeletingData(false)
       navigate('/dashboard')
-    } catch { setDeletingData(false) }
+    } catch (e) {
+      setDeleteErr('delete failed: ' + (e.code || e.message || 'unknown error'))
+      setDeletingData(false)
+    }
   }
 
   const maskKey = (k) => k ? `${k.slice(0,8)}...${k.slice(-4)}` : ''
@@ -194,7 +200,7 @@ export default function Settings() {
               <p className="text-white/30 text-xs font-mono">permanently delete all your session data from the database.</p>
               {confirmDelete && (
                 <p className="text-red-400 text-xs font-mono border border-red-400/20 px-3 py-2">
-                  ⚠ this will delete all sessions and reports. click again to confirm.
+                  ⚠ this will delete all code sessions, arena rounds and reports. click again to confirm.
                 </p>
               )}
               <button
@@ -208,6 +214,7 @@ export default function Settings() {
               >
                 {deletingData ? 'deleting...' : confirmDelete ? 'YES, DELETE ALL MY DATA' : 'delete all session data'}
               </button>
+              {deleteErr && <p className="text-red-400 text-xs font-mono">{deleteErr}</p>}
               {!confirmDelete && (
                 <p className="text-white/20 text-xs font-mono">
                   to delete your firebase account entirely: firebase console → authentication → users → delete

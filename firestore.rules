@@ -1,0 +1,44 @@
+rules_version = '2';
+// Deploy: firebase deploy --only firestore:rules   (or paste into Console → Firestore → Rules)
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function owns(data) { return signedIn() && data.uid == request.auth.uid; }
+    // on update the owner may not re-assign the doc to another user
+    function keepsOwner() { return request.resource.data.uid == resource.data.uid; }
+
+    match /sessions/{id} {
+      allow read, delete: if owns(resource.data);
+      allow create:       if owns(request.resource.data);
+      allow update:       if owns(resource.data) && keepsOwner();
+    }
+
+    match /arenaSessions/{id} {
+      allow read, delete: if owns(resource.data);
+      allow create:       if owns(request.resource.data);
+      allow update:       if owns(resource.data) && keepsOwner();
+    }
+
+    match /bookmarks/{id} {
+      allow read, delete: if owns(resource.data);
+      allow create:       if owns(request.resource.data);
+      allow update:       if owns(resource.data) && keepsOwner();
+    }
+
+    match /users/{userId} {
+      allow read:   if signedIn() && request.auth.uid == userId;
+      // users manage their profile but can never grant themselves a plan
+      allow create: if signedIn() && request.auth.uid == userId
+                    && !('plan' in request.resource.data);
+      allow update: if signedIn() && request.auth.uid == userId
+                    && request.resource.data.get('plan', null) == resource.data.get('plan', null);
+    }
+
+    // "Get Pro" early-access list: write-only for the user, readable only from the console
+    match /upgradeInterest/{userId} {
+      allow create, update: if signedIn() && request.auth.uid == userId
+                            && request.resource.data.uid == request.auth.uid;
+    }
+  }
+}

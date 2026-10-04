@@ -6,7 +6,7 @@ export function useSession() {
   const { state, dispatch } = useSessionContext()
 
   const startSession = useCallback(async (uid, code, language, difficulty, isProject=false) => {
-    dispatch({ type: 'SET_CODE', payload: { code, language } })
+    dispatch({ type: 'SET_CODE', payload: { code, language, isProject } })
     dispatch({ type: 'SET_DIFFICULTY', payload: difficulty })
     const id = await createSession(uid, { codeSnippet: code, language, difficulty, isProject })
     dispatch({ type: 'SET_SESSION_ID', payload: id })

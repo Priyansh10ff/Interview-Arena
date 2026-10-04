@@ -22,10 +22,9 @@ export default function CodingChallenge({ domain, diff, data, onResult }) {
   const [started, setStarted] = useState(false)
   const [hints, setHints] = useState([])
   const [hintsUsed, setHintsUsed] = useState(0)
-  const [showHintBtn, setShowHintBtn] = useState(false)
   const [hintLoading, setHintLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
   const { runAI } = useAI()
   const { state } = useSessionContext()
   const timerRef = useRef(null)
@@ -36,15 +35,13 @@ export default function CodingChallenge({ domain, diff, data, onResult }) {
   useEffect(() => {
     if (started) {
       timerRef.current = setInterval(() => {
-        setElapsed(e => {
-          const n = e + 1
-          if (n >= HINT_PROMPT_AFTER && !showHintBtn) setShowHintBtn(true)
-          return n
-        })
+        setElapsed(e => e + 1)
       }, 1000)
     }
     return () => clearInterval(timerRef.current)
   }, [started])
+
+  const showHintBtn = elapsed >= HINT_PROMPT_AFTER
 
   function fmt(s) {
     const m = Math.floor(s / 60).toString().padStart(2,'0')
@@ -81,24 +78,36 @@ export default function CodingChallenge({ domain, diff, data, onResult }) {
         data.description || data.title, codeRef.current
       )
       const res = await runAI(system, user, maxTokens)
+      if (typeof res?.hint !== 'string' || !res.hint.trim()) throw new Error('No hint returned.')
       setHints(h => [...h, res.hint])
       setHintsUsed(n => n + 1)
-    } catch {}
-    finally { setHintLoading(false) }
+      setError('')
+    } catch (e) {
+      setError(e.message || 'Could not get a hint.')
+    } finally { setHintLoading(false) }
   }
 
   async function handleSubmit() {
     if (!code.trim() || submitting) return
     clearInterval(timerRef.current)
     setSubmitting(true)
+    setError('')
     try {
       const { system, user, maxTokens } = buildCodingEvalPrompt(
         data.description || data.title, code, lang
       )
       const res = await runAI(system, user, maxTokens)
-      const raw = Math.max(0, (res.score || 60) - hintsUsed * HINT_PENALTY)
+      // a genuine 0 must stay 0: only fall back when the score is missing
+      const n = Number(res?.score)
+      const base = Number.isFinite(n) ? Math.min(100, Math.max(0, Math.round(n))) : 50
+      const raw = Math.max(0, base - hintsUsed * HINT_PENALTY)
       onResult(raw, `Time: ${fmt(elapsed)} · TC: ${res.timeComplexity||'?'} · SC: ${res.spaceComplexity||'?'} · ${res.feedback||''} ${res.improvement||''}`)
-    } catch { setSubmitting(false) }
+    } catch (e) {
+      setError(e.message || 'Evaluation failed. Try again.')
+      setSubmitting(false)
+      // resume the clock
+      timerRef.current = setInterval(() => setElapsed(x => x + 1), 1000)
+    }
   }
 
   const problem = data || {}
@@ -196,6 +205,7 @@ export default function CodingChallenge({ domain, diff, data, onResult }) {
                   </button>
                 )}
                 {hintsUsed >= 3 && <span className="text-white/20 font-mono text-xs">max hints reached</span>}
+                {error && <span className="text-red-400 font-mono text-xs">{error}</span>}
               </div>
               <button onClick={handleSubmit} disabled={!code.trim()||submitting||state.isAILoading}
                 className="px-5 py-2 bg-lime text-black font-bold font-mono text-xs hover:bg-lime-dim disabled:opacity-40 disabled:cursor-not-allowed transition-colors">

@@ -6,7 +6,7 @@ import WeeklyReport from '../components/dashboard/WeeklyReport'
 import { useAuthContext } from '../context/AuthContext'
 import { useBookmarks } from '../context/BookmarkContext'
 import { useTheme } from '../context/ThemeContext'
-import { getUserSessions, getSessionDates, getUserArenaSessions } from '../services/firestore'
+import { getUserSessions, getUserArenaSessions, sessionDateKey } from '../services/firestore'
 import { COMPANIES } from '../data/companies'
 import { readinessMap } from '../utils/readiness'
 import { getGrade, getScoreColor } from '../utils/scoreCalculator'
@@ -53,24 +53,24 @@ export default function Dashboard() {
   const { items: bookmarks, loaded: bLoaded, load: loadBookmarks } = useBookmarks()
   const { dark, toggle: toggleTheme } = useTheme()
   const [sessions, setSessions] = useState([])
-  const [dates,    setDates]    = useState([])
   const [loading,  setLoading]  = useState(true)
   const [arena,    setArena]    = useState([])
   const keyOk = hasApiKey()
 
   useEffect(() => {
     if (!user) return
-    Promise.all([
-      getUserSessions(user.uid, 50),
-      getSessionDates(user.uid),
-    ]).then(([s, d]) => {
-      setSessions(s)
-      setDates(d)
-      setLoading(false)
-    })
-    getUserArenaSessions(user.uid).then(setArena)
+    // two queries total (was three); dates are derived client-side
+    Promise.all([getUserSessions(user.uid), getUserArenaSessions(user.uid)])
+      .then(([s, a]) => { setSessions(s); setArena(a) })
+      .finally(() => setLoading(false))
     if (!bLoaded) loadBookmarks(user.uid)
   }, [user])
+
+  // activity calendar counts both code sessions and arena rounds
+  const dates = useMemo(
+    () => [...sessions, ...arena].map(sessionDateKey).filter(Boolean),
+    [sessions, arena]
+  )
 
   const stats = useMemo(() => {
     const done = sessions.filter(s => s.status === 'completed')

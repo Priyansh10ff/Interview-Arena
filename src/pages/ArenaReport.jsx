@@ -19,7 +19,6 @@ export default function ArenaReport() {
   const [session, setSession] = useState(null)
   const [status,  setStatus]  = useState('loading')  // loading | scoring | ready | error
   const [error,   setError]   = useState('')
-  const [copied,  setCopied]  = useState(false)
   const scoringRef = useRef(false)
 
   const company = session ? getCompany(session.companyId) : null
@@ -54,6 +53,8 @@ export default function ArenaReport() {
       if (s.status === 'live') { navigate(`/arena/session/${sessionId}`, { replace: true }); return }
       setSession(s)
       if (s.scorecard) setStatus('ready')
+      // nothing to grade: don't spend an AI call on an empty transcript
+      else if (candidateTurns(s.transcript || []) === 0) setStatus('empty')
       else score(s)
     })
   }, [sessionId, navigate, score])
@@ -61,15 +62,22 @@ export default function ArenaReport() {
   // retries go through the briefing page so plan limits apply
   function handleRetry() { navigate(`/arena/${session.companyId}/${session.roundId}`) }
 
-  async function handleShare() {
-    try { await navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch { /* ignore */ }
-  }
 
   if (status === 'loading' || status === 'scoring') return (
     <div className="min-h-screen bg-g-950 flex flex-col">
       <Navbar />
       <div className="flex-1 flex items-center justify-center">
         <Loader message={status === 'scoring' ? 'the interviewer is writing your scorecard…' : 'loading…'} />
+      </div>
+    </div>
+  )
+
+  if (status === 'empty') return (
+    <div className="min-h-screen bg-g-950 flex flex-col">
+      <Navbar />
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4 text-center">
+        <p className="text-white/40 font-mono text-xs">This round ended before you answered anything, so there is nothing to score.</p>
+        <button onClick={handleRetry} className="px-5 py-2 bg-lime text-black font-bold font-mono text-xs">TRY THE ROUND AGAIN</button>
       </div>
     </div>
   )
@@ -189,7 +197,7 @@ export default function ArenaReport() {
         </details>
 
         {/* actions */}
-        <div className="border border-t-0 border-g-border grid grid-cols-3 divide-x divide-g-border">
+        <div className="border border-t-0 border-g-border grid grid-cols-2 divide-x divide-g-border">
           <button onClick={handleRetry}
             className="py-4 bg-lime text-black font-bold font-mono text-xs hover:bg-lime-dim transition-colors">
             RETRY ROUND →
@@ -197,9 +205,6 @@ export default function ArenaReport() {
           <Link to={`/arena`} className="py-4 text-white/40 font-mono text-xs text-center hover:bg-g-800 hover:text-white">
             OTHER ROUNDS
           </Link>
-          <button onClick={handleShare} className="py-4 text-white/40 font-mono text-xs hover:bg-g-800 hover:text-white">
-            {copied ? '✓ COPIED' : 'SHARE'}
-          </button>
         </div>
       </div>
     </div>

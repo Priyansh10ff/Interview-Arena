@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth, authErrorMessage } from '../hooks/useAuth'
+import { useAuthContext } from '../context/AuthContext'
 import GoogleButton from '../components/ui/GoogleButton'
 
 export default function Login() {
@@ -10,13 +11,16 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const { user } = useAuthContext()
+  const from = useLocation().state?.from || '/dashboard'
 
   async function handle(e) {
     e.preventDefault(); setErr(''); setLoading(true)
-    try { await login(email, pass); navigate('/dashboard') }
-    catch { setErr('Invalid email or password.') }
-    finally { setLoading(false) }
+    try { await login(email, pass); navigate(from, { replace: true }) }
+    catch (e) { setErr(authErrorMessage(e)); setLoading(false) }
   }
+
+  if (user) return <Navigate to={from} replace />
 
   return (
     <div className="min-h-screen bg-g-950 grid-bg flex items-center justify-center px-4">
@@ -43,7 +47,7 @@ export default function Login() {
           <div className="p-6 space-y-5">
 
             {/* Google */}
-            <GoogleButton label="Sign in with Google" />
+            <GoogleButton label="Sign in with Google" redirectTo={from} />
 
             {/* divider */}
             <div className="flex items-center gap-3">

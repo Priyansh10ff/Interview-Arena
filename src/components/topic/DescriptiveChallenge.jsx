@@ -4,6 +4,7 @@ import VoiceInput from '../ui/VoiceInput'
 import { useAI } from '../../hooks/useAI'
 import { buildDescriptiveEvalPrompt } from '../../utils/promptBuilder'
 import { useSessionContext } from '../../context/SessionContext'
+import { toScore10 } from '../../utils/scoreCalculator'
 
 export default function DescriptiveChallenge({ domain, diff, data, onResult }) {
   const qs = data?.questions || []
@@ -11,6 +12,7 @@ export default function DescriptiveChallenge({ domain, diff, data, onResult }) {
   const [answer, setAnswer] = useState('')
   const [results, setResults] = useState([])
   const [lastFeedback, setLastFeedback] = useState(null)
+  const [error, setError] = useState('')
   const { runAI } = useAI()
   const { state } = useSessionContext()
 
@@ -22,7 +24,8 @@ export default function DescriptiveChallenge({ domain, diff, data, onResult }) {
     const { system, user, maxTokens } = buildDescriptiveEvalPrompt(q.q, q.keyPoints, answer)
     try {
       const res = await runAI(system, user, maxTokens)
-      const r = { score: res.score || 5, feedback: res.feedback || '' }
+      setError('')
+      const r = { score: toScore10(res?.score), feedback: typeof res?.feedback === 'string' ? res.feedback : '' }
       const next = [...results, r]
       setResults(next)
       setLastFeedback(r)
@@ -32,7 +35,9 @@ export default function DescriptiveChallenge({ domain, diff, data, onResult }) {
           onResult(avg, next.map((r,i)=>`Q${i+1}:${r.score}/10`).join(' · '))
         }, 1500)
       }
-    } catch {}
+    } catch (e) {
+      setError(e.message || 'Evaluation failed. Try again.')
+    }
   }
 
   function nextQ() {
@@ -81,6 +86,7 @@ export default function DescriptiveChallenge({ domain, diff, data, onResult }) {
               <div className="flex items-center gap-3">
                 <VoiceInput onTranscript={t=>setAnswer(p=>p?p.trimEnd()+' '+t:t)} disabled={state.isAILoading} />
                 <span className="text-white/20 font-mono text-xs">{answer.length} chars</span>
+                {error && <span className="text-red-400 font-mono text-xs">{error}</span>}
               </div>
               <button onClick={submit} disabled={!answer.trim()||state.isAILoading}
                 className="px-5 py-2 bg-lime text-black font-bold font-mono text-sm hover:bg-lime-dim disabled:opacity-30 transition-colors">

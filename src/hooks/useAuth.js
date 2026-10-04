@@ -7,20 +7,33 @@ import {
   updateProfile,
 } from 'firebase/auth'
 import { auth } from '../services/firebase'
-import { upsertUser } from '../services/firestore'
+import { ensureUser } from '../services/firestore'
 
 const googleProvider = new GoogleAuthProvider()
 googleProvider.setCustomParameters({ prompt: 'select_account' })
 
+// profile fields only; createdAt is set once by ensureUser on first sign-in
 async function persistUser(user) {
-  await upsertUser(user.uid, {
+  await ensureUser(user.uid, {
     displayName: user.displayName || '',
     email: user.email || '',
     photoURL: user.photoURL || '',
-    createdAt: new Date().toISOString(),
-    totalSessions: 0,
-    averageScore: 0,
   })
+}
+
+// Firebase error codes -> messages people can act on (raw messages leak "Firebase: Error (auth/...)")
+export function authErrorMessage(e) {
+  switch (e?.code) {
+    case 'auth/email-already-in-use': return 'An account with this email already exists. Try logging in.'
+    case 'auth/invalid-email':        return 'That email address looks invalid.'
+    case 'auth/weak-password':        return 'Password must be at least 6 characters.'
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+    case 'auth/user-not-found':       return 'Invalid email or password.'
+    case 'auth/too-many-requests':    return 'Too many attempts. Wait a minute and try again.'
+    case 'auth/network-request-failed': return 'Network error. Check your connection.'
+    default:                          return 'Something went wrong. Try again.'
+  }
 }
 
 export function useAuth() {
@@ -38,7 +51,6 @@ export function useAuth() {
 
   async function googleSignIn() {
     const cred = await signInWithPopup(auth, googleProvider)
-    // upsert with merge:true so existing data is never overwritten
     await persistUser(cred.user)
     return cred.user
   }

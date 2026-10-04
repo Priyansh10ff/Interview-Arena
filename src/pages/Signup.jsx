@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { useAuth, authErrorMessage } from '../hooks/useAuth'
+import { useAuthContext } from '../context/AuthContext'
 import GoogleButton from '../components/ui/GoogleButton'
 
 export default function Signup() {
@@ -11,15 +12,17 @@ export default function Signup() {
   const [loading, setLoading] = useState(false)
   const { signup } = useAuth()
   const navigate = useNavigate()
+  const { user } = useAuthContext()
 
   async function handle(e) {
     e.preventDefault()
     if (pass.length < 6) { setErr('Password must be at least 6 characters.'); return }
     setErr(''); setLoading(true)
-    try { await signup(email, pass, name); navigate('/dashboard') }
-    catch (e) { setErr(e.message || 'Failed to create account.') }
-    finally { setLoading(false) }
+    try { await signup(email, pass, name.trim()); navigate('/dashboard', { replace: true }) }
+    catch (e) { setErr(authErrorMessage(e)); setLoading(false) }
   }
+
+  if (user && !loading) return <Navigate to="/dashboard" replace />
 
   return (
     <div className="min-h-screen bg-g-950 grid-bg flex items-center justify-center px-4">

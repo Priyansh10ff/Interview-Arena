@@ -1,4 +1,5 @@
-import { createContext, useContext, useReducer, useCallback } from 'react'
+import { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react'
+import { useAuthContext } from './AuthContext'
 import { db } from '../services/firebase'
 import {
   collection, doc, setDoc, deleteDoc,
@@ -12,12 +13,20 @@ function reducer(state, action) {
     case 'SET':    return { ...state, items: action.payload, loaded: true }
     case 'ADD':    return { ...state, items: [action.payload, ...state.items] }
     case 'REMOVE': return { ...state, items: state.items.filter(b => b.id !== action.payload) }
+    case 'RESET':  return { items: [], loaded: false }
     default:       return state
   }
 }
 
 export function BookmarkProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, { items: [], loaded: false })
+  const uid = useAuthContext()?.user?.uid
+  // clear on logout / account switch so bookmarks never leak between users
+  const prevUid = useRef(uid)
+  useEffect(() => {
+    if (prevUid.current !== uid) dispatch({ type: 'RESET' })
+    prevUid.current = uid
+  }, [uid])
 
   const load = useCallback(async (uid) => {
     if (!uid) return

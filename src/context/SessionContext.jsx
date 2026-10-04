@@ -1,4 +1,5 @@
-import { createContext, useContext, useReducer } from 'react'
+import { createContext, useContext, useEffect, useReducer, useRef } from 'react'
+import { useAuthContext } from './AuthContext'
 
 const SessionContext = createContext(null)
 
@@ -8,6 +9,7 @@ const init = {
   difficulty: 'mid',
   codeSnippet: '',
   language: 'javascript',
+  isProject: false,
   codeReview: null,
   questions: [],
   currentRound: 0,
@@ -28,7 +30,7 @@ function reducer(state, action) {
   switch (action.type) {
     case 'SET_SESSION_ID': return { ...state, sessionId: action.payload }
     case 'SET_PHASE': return { ...state, phase: action.payload }
-    case 'SET_CODE': return { ...state, codeSnippet: action.payload.code, language: action.payload.language }
+    case 'SET_CODE': return { ...state, codeSnippet: action.payload.code, language: action.payload.language, isProject: !!action.payload.isProject }
     case 'SET_DIFFICULTY': return { ...state, difficulty: action.payload }
     case 'SET_CODE_REVIEW': return { ...state, codeReview: action.payload, phase: 'reviewing' }
     case 'SET_QUESTIONS': return { ...state, questions: action.payload, phase: 'interviewing', currentRound: 0 }
@@ -47,6 +49,7 @@ function reducer(state, action) {
         sessionId: s.id,
         codeSnippet: s.codeSnippet || '',
         language: s.language || 'javascript',
+        isProject: !!s.isProject,
         difficulty: s.difficulty || 'mid',
         codeReview: s.codeReview || null,
         questions,
@@ -62,6 +65,14 @@ function reducer(state, action) {
 
 export function SessionProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, init)
+  const uid = useAuthContext()?.user?.uid
+  // never carry one user's in-progress session over to the next login.
+  // Only on a real change: child effects run first, so resetting on mount would wipe them.
+  const prevUid = useRef(uid)
+  useEffect(() => {
+    if (prevUid.current !== uid) dispatch({ type: 'RESET' })
+    prevUid.current = uid
+  }, [uid])
   return (
     <SessionContext.Provider value={{ state, dispatch }}>
       {children}

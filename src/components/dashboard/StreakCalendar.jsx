@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { localDateKey } from '../../utils/dates'
 
 const LIME = '#a8ff3e'
 
@@ -25,7 +26,7 @@ export default function StreakCalendar({ dates = [] }) {
     for (let i = 363; i >= 0; i--) {
       const d = new Date(today)
       d.setDate(today.getDate() - i)
-      const key = d.toISOString().slice(0, 10)
+      const key = localDateKey(d)
       allDays.push({ key, count: counts[key] || 0 })
     }
 
@@ -39,7 +40,9 @@ export default function StreakCalendar({ dates = [] }) {
     const dateSet = new Set(Object.keys(counts))
     let cur = 0
     const t = new Date(today)
-    while (dateSet.has(t.toISOString().slice(0, 10))) {
+    // a streak is still alive if today has no session yet but yesterday does
+    if (!dateSet.has(localDateKey(t))) t.setDate(t.getDate() - 1)
+    while (dateSet.has(localDateKey(t))) {
       cur++
       t.setDate(t.getDate() - 1)
     }

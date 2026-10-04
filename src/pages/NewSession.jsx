@@ -6,6 +6,9 @@ import { useAuthContext } from '../context/AuthContext'
 import { useSession } from '../hooks/useSession'
 import { useSessionContext } from '../context/SessionContext'
 import { hasApiKey } from '../services/openrouter'
+import { CODE_LIMITS } from '../utils/promptBuilder'
+
+const MAX_FILE_BYTES = 200 * 1024 // skip generated/minified blobs
 
 const LANGS = ['c++', 'java', 'python', 'javascript', 'typescript', 'go', 'rust', 'other']
 const DIFFS = [
@@ -82,34 +85,33 @@ export default function NewSession() {
   }
 
   async function handleFiles(fileList) {
-    const files = Array.from(fileList).filter(f => isReadable(f.name)).slice(0, 30)
-    if (!files.length) { setErr('no readable code files found.'); return }
+    const files = Array.from(fileList)
+      .filter(f => isReadable(f.name) && f.size <= MAX_FILE_BYTES && !/node_modules|\.min\.|dist\//.test(f.webkitRelativePath || f.name))
+      .slice(0, 30)
+    if (!files.length) { setErr('no readable code files found (max 200kb each).'); return }
     setErr('')
     const results = await Promise.all(files.map(readFile))
     setUploadedFiles(results)
     // auto-detect language
     const detected = langFromFiles(files)
     setLang(detected)
-    // build combined code string
+    // build combined code string, splitting the prompt budget across files
+    const perFile = Math.max(600, Math.floor(CODE_LIMITS.project / results.length))
     const combined = results.map(f =>
-      `// ── ${f.name} ──\n${f.content.slice(0, 800)}`
+      `// ── ${f.name} ──\n${f.content.slice(0, perFile)}`
     ).join('\n\n')
     setCode(combined)
   }
 
   function handleDrop(e) {
     e.preventDefault(); setIsDragging(false)
-    const items = e.dataTransfer.items
-    const files = []
-    for (const item of items) {
-      const entry = item.webkitGetAsEntry?.()
-      if (entry?.isFile) {
-        entry.file(f => files.push(f))
-      }
-    }
-    // fallback
-    if (!files.length) handleFiles(e.dataTransfer.files)
-    else setTimeout(() => handleFiles(files), 100)
+    // entry.file() is async: wait for every file instead of guessing with a timeout
+    const entries = Array.from(e.dataTransfer.items || [])
+      .map(item => item.webkitGetAsEntry?.())
+      .filter(entry => entry?.isFile)
+    if (!entries.length) { handleFiles(e.dataTransfer.files); return }
+    Promise.all(entries.map(entry => new Promise(res => entry.file(res, () => res(null)))))
+      .then(files => handleFiles(files.filter(Boolean)))
   }
 
   // ── submit ──────────────────────────────────────────────────────────
@@ -239,8 +241,10 @@ export default function NewSession() {
               <span className="text-white/20 font-mono text-xs">
                 {fileCount>0 ? `${fileCount} files · ${(totalChars/1000).toFixed(1)}k chars` : `${totalChars} chars`}
               </span>
-              {totalChars > 5000 && (
-                <span className="text-yellow-400/60 font-mono text-xs">large — AI uses first 1800 chars</span>
+              {totalChars > (fileCount > 1 ? CODE_LIMITS.project : CODE_LIMITS.review) && (
+                <span className="text-yellow-400/60 font-mono text-xs">
+                  large — AI reviews the first {((fileCount > 1 ? CODE_LIMITS.project : CODE_LIMITS.review) / 1000).toFixed(0)}k chars
+                </span>
               )}
             </div>
           </div>
@@ -296,7 +300,7 @@ export default function NewSession() {
             </button>
 
             <p className="text-white/15 font-mono text-xs text-center leading-relaxed">
-              {fileCount > 1 ? `${fileCount} files will be analysed as a project` : 'code is never stored permanently'}
+              {fileCount > 1 ? `${fileCount} files will be analysed as a project` : 'code is saved to your history · delete anytime in settings'}
             </p>
           </div>
         </div>

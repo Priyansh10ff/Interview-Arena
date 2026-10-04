@@ -35,7 +35,7 @@ export default function ArenaBrief() {
   }, [user])
 
   async function handleStart() {
-    if (starting || (quota && !quota.allowed)) return
+    if (starting || !quota || !quota.allowed) return
     setStarting(true); setErr('')
     try {
       const id = await createArenaSession(user.uid, {
@@ -122,7 +122,7 @@ export default function ArenaBrief() {
               {quota.limit} free rounds used this month · upgrade →
             </Link>
           ) : keyOk ? (
-            <button onClick={handleStart} disabled={starting}
+            <button onClick={handleStart} disabled={starting || !quota}
               className="px-6 py-2.5 bg-lime text-black font-bold font-mono text-xs hover:bg-lime-dim disabled:opacity-50 transition-colors">
               {starting ? 'starting…' : 'START INTERVIEW →'}
             </button>

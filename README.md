@@ -72,7 +72,7 @@ Plus a full **Topic Practice** mode (DSA, React, System Design, SQL…) with Cod
 | 📅 **Activity Heatmap** | GitHub-style contribution calendar showing your practice streak |
 | 📈 **Weekly Progress** | This-week vs last-week score delta, struggled concepts |
 | 🔁 **Retry Same Code** | Re-run an interview on the same snippet with one click |
-| 🔗 **Share Report** | Copy report URL to clipboard — reports are shareable |
+| 🔗 **Copy Link** | Copy the report URL (only you can open it while signed in) |
 | 🌗 **Dark / Light Mode** | Persistent theme toggle with full light-mode stylesheet |
 | 🔐 **Google + Email Auth** | Sign in with Google or email/password |
 
@@ -174,18 +174,10 @@ npm install
 3. **Firestore Database** → Create database → **Test mode**
 4. **Project Settings** → Your apps → **Add web app** → copy config
 
-#### Firestore Index (required)
+#### Firestore rules
 
-Go to **Firestore → Indexes → Create composite index**:
-
-```
-Collection:  sessions
-Field 1:     uid         (Ascending)
-Field 2:     createdAt   (Descending)
-Query scope: Collection
-```
-
-> ⚠️ Without this index, the **History** page and **Dashboard** session list will be empty.
+Paste [`firestore.rules`](firestore.rules) into **Firestore → Rules** (or `firebase deploy --only firestore:rules`).
+No composite indexes are needed: queries filter by `uid` and sort on the client.
 
 ### 3 — Environment Variables
 
@@ -193,23 +185,15 @@ Query scope: Collection
 cp .env.example .env
 ```
 
-Fill in `.env`:
+Fill in the Firebase values in `.env`, then choose how the AI is called (see `.env.example`):
 
-```env
-# Firebase (required)
-VITE_FIREBASE_API_KEY=
-VITE_FIREBASE_AUTH_DOMAIN=
-VITE_FIREBASE_PROJECT_ID=
-VITE_FIREBASE_STORAGE_BUCKET=
-VITE_FIREBASE_MESSAGING_SENDER_ID=
-VITE_FIREBASE_APP_ID=
+| Mode | Where the key lives | Use for |
+|------|--------------------|---------|
+| **Server proxy** (`VITE_AI_PROXY=true`) | Server env `OPENROUTER_API_KEY`, never sent to browsers | Any deployed site |
+| **Settings page** | Each user's own browser (`localStorage`) | Bring-your-own-key |
+| `VITE_OPENROUTER_API_KEY` | ⚠ Bundled into public JS | Local dev only |
 
-# AI key — pick one (or leave blank and add in Settings)
-VITE_OPENROUTER_API_KEY=sk-or-v1-...
-# VITE_OPENAI_API_KEY=sk-...
-```
-
-> 💡 **No `.env` key?** Leave both blank. After signing up, go to **Settings** and paste your key there — it's stored in `localStorage` only, never sent to any server.
+> ⚠️ Anything prefixed `VITE_` ends up in the built JavaScript. Never put an AI key in a `VITE_` variable on a deployed site.
 
 ### 4 — Run
 
@@ -229,7 +213,7 @@ Two options, same models:
 | **OpenRouter** (recommended) | `sk-or-v1-...` | [openrouter.ai/keys](https://openrouter.ai/keys) | ~$0.15 / 1M tokens |
 | **OpenAI direct** | `sk-...` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | ~$0.15 / 1M tokens |
 
-Key priority: `VITE_OPENROUTER_API_KEY` → `VITE_OPENAI_API_KEY` → Settings (localStorage)
+Key priority: proxy (`VITE_AI_PROXY=true`) → `VITE_OPENROUTER_API_KEY` → `VITE_OPENAI_API_KEY` → Settings (localStorage)
 
 **Cost per full session** (code review + 5 rounds + report): **~$0.003** (less than half a cent)
 
@@ -242,8 +226,11 @@ Key priority: `VITE_OPENROUTER_API_KEY` → `VITE_OPENAI_API_KEY` → Settings (
 ```bash
 # Push to GitHub, then:
 # 1. vercel.com → Import repository
-# 2. Project Settings → Environment Variables → add all VITE_* vars
-# 3. Deploy
+# 2. Project Settings → Environment Variables:
+#      VITE_FIREBASE_* (all six), VITE_AI_PROXY=true,
+#      OPENROUTER_API_KEY, FIREBASE_PROJECT_ID   (server-only, no VITE_ prefix)
+# 3. Deploy. api/ai.js becomes POST /api/ai: it verifies the Firebase ID token,
+#    validates the request, locks the model, caps tokens and rate-limits per user.
 npm run build   # test locally first
 ```
 
@@ -253,6 +240,8 @@ npm run build   # test locally first
 npm run build
 # Drag dist/ to netlify.com/drop
 # Or: connect repo, set build command = npm run build, publish dir = dist
+# Note: the /api/ai proxy is written for Vercel. On Netlify, use bring-your-own-key
+# (Settings page) or port api/_aiProxy.js to a Netlify function.
 ```
 
 ---
@@ -326,67 +315,38 @@ src/
 
 | Call | Max tokens | When called |
 |------|-----------|-------------|
-| Code review | 1,400 | Once per session start |
+| Code review (≤4k chars of code) | 2,200 | Once per session start |
 | Generate 5 questions | 500 | Once after review |
 | Evaluate answer | 350 | Per round (×5) |
 | Final report | 1,200 | Once at end |
+| Arena interviewer turn | 320 | Per reply (6-14 per round) |
+| Arena scorecard | 900 | Once per round |
 | Topic MCQ (5 Qs) | 600 | Topic practice |
 | Topic coding problem | 700 | Topic practice |
 | Topic descriptive eval | 200 | Per question (×3) |
 | Hint | 100 | On demand (coding mode) |
 
-**Full code session total: ~4,350 tokens ≈ $0.003**
+**Full code session: ~5-6k output tokens, well under $0.01 on gpt-4o-mini.**
 
 ---
 
 ## ✦ Data & Privacy
 
-- **API keys** stored in browser `localStorage` only — never transmitted to any server other than OpenRouter/OpenAI
+- **API keys**: in proxy mode the key never leaves the server. In bring-your-own-key mode it stays in the user's browser `localStorage` and is only sent to OpenRouter/OpenAI
 - **Code snippets** sent to OpenRouter/OpenAI for AI processing — subject to their privacy policies
 - **Session data** (code, Q&A, scores) stored in your Firebase project — you own it
-- **Delete your data**: Settings → Data → "Delete all session data" (batch-deletes from Firestore)
+- **Delete your data**: Settings → Data → "Delete all session data" (code sessions + arena rounds)
 
 ---
 
 ## ✦ Firestore Security Rules (Production)
 
-Replace test-mode rules before going live:
+The rules live in [`firestore.rules`](firestore.rules). They enforce:
 
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /sessions/{sessionId} {
-      allow read, write: if request.auth != null
-        && request.auth.uid == resource.data.uid;
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.uid;
-    }
-    match /bookmarks/{bookmarkId} {
-      allow read, write: if request.auth != null
-        && request.auth.uid == resource.data.uid;
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.uid;
-    }
-    match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      // users can edit their profile but never their own plan
-      allow write: if request.auth != null && request.auth.uid == userId
-        && (!('plan' in request.resource.data)
-            || (resource != null && request.resource.data.plan == resource.data.plan));
-    }
-    match /arenaSessions/{id} {
-      allow read, update, delete: if request.auth != null
-        && request.auth.uid == resource.data.uid;
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.uid;
-    }
-    match /upgradeInterest/{userId} {
-      allow create, update: if request.auth != null && request.auth.uid == userId;
-    }
-  }
-}
-```
+- every document is readable/writable only by the user whose `uid` it carries
+- owners can't re-assign a document to another user on update
+- users can't create or change their own `plan` (set it from the console or a payment webhook)
+- `upgradeInterest` is write-only for users
 
 ---
 

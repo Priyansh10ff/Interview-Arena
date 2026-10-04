@@ -4,8 +4,10 @@ const ThemeContext = createContext(null)
 
 export function ThemeProvider({ children }) {
   const [dark, setDark] = useState(() => {
-    const saved = localStorage.getItem('ia_theme')
-    return saved ? saved === 'dark' : true
+    try {
+      const saved = localStorage.getItem('ia_theme')
+      return saved ? saved === 'dark' : true
+    } catch { return true }
   })
 
   useEffect(() => {
@@ -15,7 +17,7 @@ export function ThemeProvider({ children }) {
     } else {
       root.classList.add('light')
     }
-    localStorage.setItem('ia_theme', dark ? 'dark' : 'light')
+    try { localStorage.setItem('ia_theme', dark ? 'dark' : 'light') } catch { /* private mode */ }
   }, [dark])
 
   return (

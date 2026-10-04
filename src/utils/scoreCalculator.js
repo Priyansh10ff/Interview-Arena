@@ -1,3 +1,28 @@
+const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n))
+
+// model output is untrusted: coerce the code review into a safe shape
+export function normalizeReview(raw) {
+  const r = raw && typeof raw === 'object' ? raw : {}
+  const n = Number(r.healthScore)
+  const sev = new Set(['high', 'medium', 'low'])
+  return {
+    ...r,
+    healthScore: Number.isFinite(n) ? clamp(Math.round(n), 0, 100) : 50,
+    strengths: Array.isArray(r.strengths) ? r.strengths.filter(x => typeof x === 'string') : [],
+    issues: Array.isArray(r.issues)
+      ? r.issues.filter(i => i && typeof i === 'object').map(i => ({ ...i, severity: sev.has(i.severity) ? i.severity : 'low' }))
+      : [],
+    topicsToStudy: Array.isArray(r.topicsToStudy) ? r.topicsToStudy.filter(x => typeof x === 'string') : [],
+    refactoredCode: typeof r.refactoredCode === 'string' ? r.refactoredCode : '',
+  }
+}
+
+// 1-10 score from a model; falls back only when the value is missing, not when it is 0/low
+export function toScore10(v, fallback = 5) {
+  const n = Number(v)
+  return Number.isFinite(n) ? clamp(Math.round(n), 1, 10) : fallback
+}
+
 export function calcInterviewScore(rounds) {
   if (!rounds?.length) return 0
   return Math.round(rounds.reduce((s,r)=>s+(r.score||0),0)/rounds.length*10)

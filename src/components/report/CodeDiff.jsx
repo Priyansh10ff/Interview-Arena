@@ -1,26 +1,10 @@
 import { useState, useMemo } from 'react'
-
-function computeDiff(before, after) {
-  const bLines = String(before || '').split('\n')
-  const aLines = String(after  || '').split('\n')
-  const out = []
-  let bi = 0, ai = 0
-  while (bi < bLines.length || ai < aLines.length) {
-    if (bi < bLines.length && ai < aLines.length && bLines[bi] === aLines[ai]) {
-      out.push({ type: 'same',   text: bLines[bi] }); bi++; ai++
-    } else if (ai < aLines.length && (bi >= bLines.length || bLines[bi] !== aLines[ai])) {
-      out.push({ type: 'add',    text: aLines[ai] }); ai++
-    } else {
-      out.push({ type: 'remove', text: bLines[bi] }); bi++
-    }
-  }
-  return out
-}
+import { lineDiff } from '../../utils/lineDiff'
 
 export default function CodeDiff({ fixes }) {
   const [idx, setIdx] = useState(0)
   const fix   = fixes?.[idx]
-  const lines  = useMemo(() => fix ? computeDiff(fix.original, fix.fixed) : [], [fix])
+  const lines  = useMemo(() => fix ? lineDiff(fix.original, fix.fixed) : [], [fix])
 
   if (!fixes?.length) return null
 

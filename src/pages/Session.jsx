@@ -14,10 +14,12 @@ import { useSession } from '../hooks/useSession'
 import {
   buildCodeReviewPrompt,
   buildQuestionsPrompt,
+  buildProjectReviewPrompt,
+  buildProjectQuestionsPrompt,
   buildEvaluationPrompt,
   buildFinalReportPrompt,
 } from '../utils/promptBuilder'
-import { calcInterviewScore, calcOverallScore, getScoreColor } from '../utils/scoreCalculator'
+import { calcInterviewScore, calcOverallScore, getScoreColor, normalizeReview, toScore10 } from '../utils/scoreCalculator'
 
 // Page-level loading states (separate from AI loading)
 const PHASE_LOADING = {
@@ -65,12 +67,12 @@ export default function Session() {
         navigate(`/report/${sessionId}`, { replace: true }); return
       }
       if (!session.codeReview && session.codeSnippet) {
-        doCodeReview(session.codeSnippet, session.language, session.difficulty, sessionId)
+        doCodeReview(session.codeSnippet, session.language, session.difficulty, sessionId, !!session.isProject)
       }
     }
 
     if (state.phase === 'idle' && state.codeSnippet && state.sessionId === sessionId) {
-      doCodeReview(state.codeSnippet, state.language, state.difficulty, sessionId)
+      doCodeReview(state.codeSnippet, state.language, state.difficulty, sessionId, state.isProject)
     } else {
       init()
     }
@@ -78,7 +80,7 @@ export default function Session() {
   }, [sessionId])
 
   // ── doCodeReview ──────────────────────────────────────────────────
-  const doCodeReview = useCallback(async (code, lang, diff, sid) => {
+  const doCodeReview = useCallback(async (code, lang, diff, sid, isProject) => {
     const c = code || state.codeSnippet
     const l = lang || state.language
     const d = diff || state.difficulty
@@ -86,15 +88,14 @@ export default function Session() {
     dispatch({ type: 'SET_PHASE', payload: 'reviewing' })
     setLoadingPhase('review')
     try {
-      const p = buildCodeReviewPrompt(c, l, d)
-      const review = await runAI(p.system, p.user, p.maxTokens)
+      // multi-file uploads get the project prompt (architecture-level review)
+      const p = isProject ? buildProjectReviewPrompt(c, d) : buildCodeReviewPrompt(c, l, d)
+      const review = normalizeReview(await runAI(p.system, p.user, p.maxTokens))
       if (!mountedRef.current) return
       await saveCodeReview(review, s)
     } catch (err) {
       if (!mountedRef.current) return
-      if (err.message !== 'NO_KEY' && err.message !== 'INVALID_KEY') {
-        dispatch({ type: 'SET_ERROR', payload: err.message || 'Code review failed.' })
-      }
+      dispatch({ type: 'SET_ERROR', payload: err.message || 'Code review failed.' })
     } finally {
       if (mountedRef.current) setLoadingPhase(null)
     }
@@ -110,16 +111,20 @@ export default function Session() {
 
     setLoadingPhase('questions')
     try {
-      const p = buildQuestionsPrompt(state.codeSnippet, summary, state.difficulty)
+      const p = state.isProject
+        ? buildProjectQuestionsPrompt(state.codeSnippet, summary, state.difficulty)
+        : buildQuestionsPrompt(state.codeSnippet, summary, state.difficulty)
       const result = await runAI(p.system, p.user, p.maxTokens)
       if (!mountedRef.current) return
-      if (!result?.questions?.length) throw new Error('No questions returned — try again.')
-      await saveQuestions(result.questions, state.sessionId)
+      const questions = (Array.isArray(result?.questions) ? result.questions : [])
+        .filter(q => q && typeof q.question === 'string' && q.question.trim())
+        .map(q => ({ question: q.question, concept: typeof q.concept === 'string' ? q.concept : 'general' }))
+        .slice(0, 5)
+      if (!questions.length) throw new Error('No questions returned — try again.')
+      await saveQuestions(questions, state.sessionId)
     } catch (err) {
       if (!mountedRef.current) return
-      if (err.message !== 'NO_KEY' && err.message !== 'INVALID_KEY') {
-        dispatch({ type: 'SET_ERROR', payload: err.message || 'Failed to generate questions.' })
-      }
+      dispatch({ type: 'SET_ERROR', payload: err.message || 'Failed to generate questions.' })
     } finally {
       if (mountedRef.current) setLoadingPhase(null)
     }
@@ -130,7 +135,7 @@ export default function Session() {
     if (!answer.trim() || loadingPhase) return
     const roundIndex = state.currentRound
     const currentQ   = state.questions[roundIndex]
-    if (!currentQ) return
+    if (!currentQ || state.rounds.length >= state.questions.length) return
 
     const savedAnswer = answer
     setAnswer('')
@@ -142,7 +147,7 @@ export default function Session() {
       if (!mountedRef.current) return
 
       // validate response shape
-      const score = Math.min(10, Math.max(1, Number(ev?.score) || 5))
+      const score = toScore10(ev?.score)
       const roundData = {
         question:    currentQ.question,
         concept:     currentQ.concept,
@@ -167,9 +172,7 @@ export default function Session() {
     } catch (err) {
       if (!mountedRef.current) return
       setAnswer(savedAnswer) // restore on error
-      if (err.message !== 'NO_KEY' && err.message !== 'INVALID_KEY') {
-        dispatch({ type: 'SET_ERROR', payload: err.message || 'Evaluation failed — try again.' })
-      }
+      dispatch({ type: 'SET_ERROR', payload: err.message || 'Evaluation failed — try again.' })
     } finally {
       if (mountedRef.current) setLoadingPhase(null)
     }
@@ -195,9 +198,10 @@ export default function Session() {
       navigate(`/report/${state.sessionId}`)
     } catch (err) {
       if (!mountedRef.current) return
-      if (err.message !== 'NO_KEY' && err.message !== 'INVALID_KEY') {
-        dispatch({ type: 'SET_ERROR', payload: err.message || 'Report generation failed.' })
-      }
+      // restore the "get report" button so the user can retry
+      setGenReport(true)
+      setShowResult(true)
+      dispatch({ type: 'SET_ERROR', payload: err.message || 'Report generation failed.' })
     } finally {
       if (mountedRef.current) setLoadingPhase(null)
     }
@@ -222,10 +226,17 @@ export default function Session() {
             {msg}
           </p>
           <button
-            onClick={() => dispatch({ type: 'SET_ERROR', payload: null })}
+            onClick={() => {
+              dispatch({ type: 'SET_ERROR', payload: null })
+              if (isKeyError) { navigate('/settings'); return }
+              // review failed before anything was generated: retry it instead of a dead screen
+              if (!state.codeReview && state.codeSnippet) {
+                doCodeReview(state.codeSnippet, state.language, state.difficulty, state.sessionId, state.isProject)
+              }
+            }}
             className="px-5 py-2 bg-lime text-black font-bold font-mono text-xs hover:bg-lime-dim transition-colors"
           >
-            {isKeyError ? 'GO TO SETTINGS' : 'DISMISS'}
+            {isKeyError ? 'GO TO SETTINGS' : !state.codeReview ? 'RETRY' : 'DISMISS'}
           </button>
         </div>
       </div>
@@ -270,6 +281,8 @@ export default function Session() {
     const curIdx   = Math.min(state.currentRound, total - 1)
     const dispRound = Math.min(state.rounds.length + 1, total)
     const currentQ  = state.questions[curIdx]
+    // e.g. reloaded after the last answer but before generating the report
+    const allAnswered = state.rounds.length >= total
 
     return (
       <div className="min-h-screen bg-g-950">
@@ -290,7 +303,17 @@ export default function Session() {
           />
 
           {/* question + answer */}
-          {!showResult && currentQ && (
+          {!showResult && allAnswered && (
+            <div className="border border-g-border bg-g-900 p-5 space-y-3 animate-slide-up">
+              <p className="text-white/50 font-mono text-xs">All rounds answered.</p>
+              <button onClick={handleGenerateReport}
+                className="w-full py-3 bg-lime text-black font-bold font-mono text-sm hover:bg-lime-dim transition-colors">
+                📊 GET FULL REPORT →
+              </button>
+            </div>
+          )}
+
+          {!showResult && !allAnswered && currentQ && (
             <div className="animate-slide-up space-y-3">
               <QuestionCard question={currentQ} roundNumber={dispRound} />
               <textarea

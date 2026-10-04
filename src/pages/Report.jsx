@@ -16,14 +16,17 @@ export default function Report() {
   const navigate = useNavigate()
   const { state, dispatch } = useSessionContext()
   const { loadSession } = useSession()
-  const [loading,   setLoading]   = useState(false)
+  // reload whenever the context holds a different session (e.g. opened from History)
+  const stale = state.sessionId !== sessionId || !state.finalReport
+  const [loading,   setLoading]   = useState(stale)
   const [copied,    setCopied]    = useState(false)
 
   useEffect(() => {
-    if (!state.finalReport && sessionId) {
+    if (stale && sessionId) {
       setLoading(true)
-      loadSession(sessionId).finally(() => setLoading(false))
+      loadSession(sessionId).catch(() => {}).finally(() => setLoading(false))
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId])
 
   // share — copy URL to clipboard
@@ -54,7 +57,7 @@ export default function Report() {
     </div>
   )
 
-  const report = state.finalReport
+  const report = state.sessionId === sessionId ? state.finalReport : null
   if (!report) return (
     <div className="min-h-screen bg-g-950 flex flex-col">
       <Navbar />
@@ -132,9 +135,9 @@ export default function Report() {
             className="py-4 text-white/40 font-mono text-xs text-center hover:bg-g-800 hover:text-white transition-colors">
             RETRY SAME
           </button>
-          <button onClick={handleShare}
+          <button onClick={handleShare} title="Only you can open this link while signed in"
             className="py-4 text-white/40 font-mono text-xs text-center hover:bg-g-800 hover:text-white transition-colors">
-            {copied ? '✓ COPIED' : 'SHARE'}
+            {copied ? '✓ COPIED' : 'COPY LINK'}
           </button>
         </div>
       </div>

@@ -8,10 +8,11 @@ import ProtectedRoute from './components/layout/ProtectedRoute'
 import Landing   from './pages/Landing'
 import Login     from './pages/Login'
 import Signup    from './pages/Signup'
-import Dashboard from './pages/Dashboard'
-import NewSession from './pages/NewSession'
-import Session   from './pages/Session'
 
+// everything behind login is code-split so the landing page loads fast
+const Dashboard      = lazy(() => import('./pages/Dashboard'))
+const NewSession     = lazy(() => import('./pages/NewSession'))
+const Session        = lazy(() => import('./pages/Session'))
 const Report         = lazy(() => import('./pages/Report'))
 const SessionHistory = lazy(() => import('./pages/SessionHistory'))
 const Settings       = lazy(() => import('./pages/Settings'))
@@ -49,9 +50,9 @@ export default function App() {
                 <Route path="/login"             element={<Login />} />
                 <Route path="/signup"            element={<Signup />} />
                 <Route path="/pricing"           element={<Suspense fallback={<Fallback />}><Pricing /></Suspense>} />
-                <Route path="/dashboard"         element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/session/new"       element={<ProtectedRoute><NewSession /></ProtectedRoute>} />
-                <Route path="/session/:sessionId" element={<ProtectedRoute><Session /></ProtectedRoute>} />
+                <Route path="/dashboard"         element={<Guard><Dashboard /></Guard>} />
+                <Route path="/session/new"       element={<Guard><NewSession /></Guard>} />
+                <Route path="/session/:sessionId" element={<Guard><Session /></Guard>} />
                 <Route path="/report/:sessionId" element={<Guard><Report /></Guard>} />
                 <Route path="/history"           element={<Guard><SessionHistory /></Guard>} />
                 <Route path="/settings"          element={<Guard><Settings /></Guard>} />

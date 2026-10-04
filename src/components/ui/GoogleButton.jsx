@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
-export default function GoogleButton({ label = 'Continue with Google' }) {
+export default function GoogleButton({ label = 'Continue with Google', redirectTo = '/dashboard' }) {
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
   const { googleSignIn } = useAuth()
@@ -12,7 +12,7 @@ export default function GoogleButton({ label = 'Continue with Google' }) {
     setErr(''); setLoading(true)
     try {
       await googleSignIn()
-      navigate('/dashboard')
+      navigate(redirectTo, { replace: true })
     } catch (e) {
       const msg = e.code === 'auth/popup-closed-by-user'
         ? 'Popup closed — try again.'
@@ -20,7 +20,6 @@ export default function GoogleButton({ label = 'Continue with Google' }) {
         ? 'Popup blocked — allow popups for this site.'
         : 'Google sign-in failed. Try again.'
       setErr(msg)
-    } finally {
       setLoading(false)
     }
   }

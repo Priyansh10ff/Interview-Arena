@@ -1,17 +1,21 @@
 const trunc = (s,n) => s&&s.length>n ? s.slice(0,n)+'…' : (s||'')
 
+// How much code each prompt sees. gpt-4o-mini is cheap, and 900 chars (~25 lines)
+// was too little for a meaningful review.
+export const CODE_LIMITS = { review: 4000, project: 7000, context: 1500 }
+
 // ── Code Review (main session) ───────────────────────────────────────
 export function buildCodeReviewPrompt(code, lang, diff) {
   return {
     system:`Senior ${diff}-level code reviewer. JSON only.`,
-    user:`Review this ${lang} code:\n${trunc(code,900)}\nReturn:{"healthScore":<0-100>,"strengths":["..."],"issues":[{"line":"...","severity":"high|medium|low","description":"..."}],"refactoredCode":"...","topicsToStudy":["..."]}`,
-    maxTokens:1400,
+    user:`Review this ${lang} code:\n${trunc(code,CODE_LIMITS.review)}\nReturn:{"healthScore":<0-100>,"strengths":["..."],"issues":[{"line":"...","severity":"high|medium|low","description":"..."}],"refactoredCode":"...","topicsToStudy":["..."]}`,
+    maxTokens:2200, // room for refactoredCode of a 4k-char snippet without truncating the JSON
   }
 }
 export function buildQuestionsPrompt(code, summary, diff) {
   return {
     system:`Technical interviewer. ${diff}. JSON only.`,
-    user:`Code:${trunc(code,400)}\nReview:${trunc(summary,200)}\nReturn 5 questions:{"questions":[{"question":"...","concept":"..."},{"question":"...","concept":"..."},{"question":"...","concept":"..."},{"question":"...","concept":"..."},{"question":"...","concept":"..."}]}`,
+    user:`Code:${trunc(code,CODE_LIMITS.context)}\nReview:${trunc(summary,300)}\nReturn 5 questions:{"questions":[{"question":"...","concept":"..."},{"question":"...","concept":"..."},{"question":"...","concept":"..."},{"question":"...","concept":"..."},{"question":"...","concept":"..."}]}`,
     maxTokens:500,
   }
 }
@@ -26,7 +30,7 @@ export function buildFinalReportPrompt(code, review, rounds, diff) {
   const rs = rounds.map((r,i)=>`R${i+1}[${r.concept}]${r.score}/10`).join(',')
   return {
     system:`Post-interview engineer. ${diff}. JSON only.`,
-    user:`Code:${trunc(code,400)}\nHealth:${review.healthScore}/100,topics:${review.topicsToStudy?.join(',')}\nRounds:${rs}\nReturn:{"verdict":"<2 sentences>","breakdown":{"codeUnderstanding":<1-10>,"conceptClarity":<1-10>,"optimizationAwareness":<1-10>,"communication":<1-10>},"weakConcepts":["..."],"studyRoadmap":[{"concept":"...","why":"...","resource":"..."}],"codeFixSuggestions":[{"original":"...","fixed":"...","explanation":"..."}]}`,
+    user:`Code:${trunc(code,CODE_LIMITS.context)}\nHealth:${review.healthScore}/100,topics:${review.topicsToStudy?.join(',')}\nRounds:${rs}\nReturn:{"verdict":"<2 sentences>","breakdown":{"codeUnderstanding":<1-10>,"conceptClarity":<1-10>,"optimizationAwareness":<1-10>,"communication":<1-10>},"weakConcepts":["..."],"studyRoadmap":[{"concept":"...","why":"...","resource":"..."}],"codeFixSuggestions":[{"original":"...","fixed":"...","explanation":"..."}]}`,
     maxTokens:1200,
   }
 }
@@ -79,14 +83,14 @@ export function buildCodingEvalPrompt(problem, code, lang) {
 export function buildProjectReviewPrompt(filesContent, diff) {
   return {
     system:`Senior ${diff}-level code reviewer analysing a multi-file project. JSON only.`,
-    user:`Project files:\n${trunc(filesContent,1800)}\nReturn:{"healthScore":<0-100>,"architecture":"<1 sentence summary>","strengths":["..."],"issues":[{"file":"...","severity":"high|medium|low","description":"..."}],"refactoredCode":"<fix for the most critical issue only>","topicsToStudy":["..."]}`,
-    maxTokens:1600,
+    user:`Project files:\n${trunc(filesContent,CODE_LIMITS.project)}\nReturn:{"healthScore":<0-100>,"architecture":"<1 sentence summary>","strengths":["..."],"issues":[{"file":"...","severity":"high|medium|low","description":"..."}],"refactoredCode":"<fix for the most critical issue only>","topicsToStudy":["..."]}`,
+    maxTokens:2200,
   }
 }
 export function buildProjectQuestionsPrompt(filesContent, reviewSummary, diff) {
   return {
     system:`Technical interviewer. ${diff}. JSON only.`,
-    user:`Project excerpt:${trunc(filesContent,500)}\nReview:${trunc(reviewSummary,200)}\nReturn 5 questions about architecture/design decisions:{"questions":[{"question":"...","concept":"..."},{"question":"...","concept":"..."},{"question":"...","concept":"..."},{"question":"...","concept":"..."},{"question":"...","concept":"..."}]}`,
+    user:`Project excerpt:${trunc(filesContent,CODE_LIMITS.context)}\nReview:${trunc(reviewSummary,200)}\nReturn 5 questions about architecture/design decisions:{"questions":[{"question":"...","concept":"..."},{"question":"...","concept":"..."},{"question":"...","concept":"..."},{"question":"...","concept":"..."},{"question":"...","concept":"..."}]}`,
     maxTokens:500,
   }
 }

@@ -79,6 +79,23 @@ export default function Navbar() {
           </div>
         )}
       </div>
+
+      {/* mobile: the desktop links are hidden below sm, so give them their own scrollable row */}
+      {user && (
+        <div className="sm:hidden border-t border-g-border overflow-x-auto">
+          <div className="flex px-2">
+            {NAV.map(({ to, label }) => {
+              const active = pathname === to || (to === '/arena' && pathname.startsWith('/arena'))
+              return (
+                <Link key={to} to={to}
+                  className={`px-3 py-2 font-mono text-xs whitespace-nowrap ${active ? 'text-lime' : 'text-white/40'}`}>
+                  {label}
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </nav>
   )
 }
