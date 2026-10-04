@@ -8,6 +8,7 @@ import { getCompany, getRound } from '../data/companies'
 import { getRoundType } from '../data/roundTypes'
 import { getArenaSession, updateArenaSession } from '../services/firestore'
 import { callAIChat } from '../services/openrouter'
+import { useSpeech } from '../hooks/useSpeech'
 import {
   buildInterviewerSystemPrompt, interviewerTurn,
   shouldForceWrapup, formatClock, turnBudget, candidateTurns,
@@ -36,6 +37,8 @@ export default function ArenaSession() {
   const [done,       setDone]       = useState(false)
   const [now,        setNow]        = useState(Date.now())
 
+  const { supported: ttsOk, enabled: ttsOn, speaking, speak, stop: stopSpeech, toggle: toggleTts } = useSpeech()
+  const spokenRef   = useRef(-1)   // index of the last interviewer message already spoken
   const startedRef  = useRef(false)
   const lastCodeRef = useRef('')
   const bottomRef   = useRef(null)
@@ -93,6 +96,7 @@ export default function ArenaSession() {
       }
       setSession(s)
       setTranscript(s.transcript || [])
+      spokenRef.current = (s.transcript || []).length - 1
       setCode(s.code || '')
       lastCodeRef.current = s.code || ''
       setCodeLang(s.codeLang || 'javascript')
@@ -118,12 +122,21 @@ export default function ArenaSession() {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [transcript, thinking])
 
+  // speak each new interviewer message once
+  useEffect(() => {
+    const i = transcript.length - 1
+    if (i <= spokenRef.current) return
+    spokenRef.current = i
+    if (transcript[i]?.role === 'interviewer') speak(transcript[i].text)
+  }, [transcript, speak])
+
   // ── candidate turn ────────────────────────────────────────────────
   async function handleSend() {
     if (thinking || done) return
     const text = input.trim()
     const codeChanged = isCode && code.trim() && code !== lastCodeRef.current
     if (!text && !codeChanged) return
+    stopSpeech()
     const item = { role: 'candidate', text: text || '(shared updated code)', at: Date.now() }
     if (codeChanged) { item.code = code; lastCodeRef.current = code }
     const next = [...transcript, item]
@@ -226,6 +239,14 @@ export default function ArenaSession() {
           <span className="text-white/30 font-mono text-xs"> · {round.title} · {session.level}</span>
         </div>
         <div className="flex items-center gap-3 shrink-0">
+          {ttsOk && (
+            <button onClick={toggleTts} title="Interviewer voice"
+              className={`px-2 py-1 border font-mono text-xs transition-colors ${
+                ttsOn ? 'border-lime/40 text-lime' : 'border-g-border text-white/30 hover:text-white'
+              } ${speaking ? 'animate-pulse-lime' : ''}`}>
+              {ttsOn ? '🔊 voice' : '🔇 muted'}
+            </button>
+          )}
           <span className="text-white/25 font-mono text-xs hidden sm:inline">{turns}/{turnBudget(round.durationMin)} replies</span>
           <span className={`font-mono text-sm font-bold ${overTime ? 'text-red-400' : 'text-white'}`}>
             {formatClock(elapsed)}<span className="text-white/25 font-normal text-xs"> / {round.durationMin}:00</span>
