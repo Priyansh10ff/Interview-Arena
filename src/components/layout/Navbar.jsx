@@ -23,6 +23,7 @@ export default function Navbar() {
     { to: '/topic',     label: 'Practice'  },
     { to: '/bookmarks', label: 'Saved'     },
     { to: '/settings',  label: 'Settings'  },
+    { to: '/pricing',   label: 'Pro'       },
   ]
 
   return (

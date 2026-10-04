@@ -3,10 +3,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import Navbar from '../components/layout/Navbar'
 import Loader from '../components/ui/Loader'
 import ScoreRing from '../components/ui/ScoreRing'
-import { useAuthContext } from '../context/AuthContext'
 import { getCompany, getRound } from '../data/companies'
 import { getRoundType } from '../data/roundTypes'
-import { createArenaSession, getArenaSession, updateArenaSession } from '../services/firestore'
+import { getArenaSession, updateArenaSession } from '../services/firestore'
 import { callAI } from '../services/openrouter'
 import { buildScorecardPrompt, normalizeScorecard, computeVerdict } from '../utils/scorecard'
 import { candidateTurns, formatClock } from '../utils/arenaEngine'
@@ -17,7 +16,6 @@ const BAR_LABEL = { 1: 'strong no', 2: 'below bar', 3: 'meets bar', 4: 'exceeds 
 export default function ArenaReport() {
   const { sessionId } = useParams()
   const navigate = useNavigate()
-  const { user } = useAuthContext()
   const [session, setSession] = useState(null)
   const [status,  setStatus]  = useState('loading')  // loading | scoring | ready | error
   const [error,   setError]   = useState('')
@@ -60,13 +58,8 @@ export default function ArenaReport() {
     })
   }, [sessionId, navigate, score])
 
-  async function handleRetry() {
-    const id = await createArenaSession(user.uid, {
-      companyId: session.companyId, roundId: session.roundId, level: session.level,
-      roundType: session.roundType, companyName: session.companyName, roundTitle: session.roundTitle,
-    })
-    navigate(`/arena/session/${id}`)
-  }
+  // retries go through the briefing page so plan limits apply
+  function handleRetry() { navigate(`/arena/${session.companyId}/${session.roundId}`) }
 
   async function handleShare() {
     try { await navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch { /* ignore */ }

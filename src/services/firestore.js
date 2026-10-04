@@ -80,3 +80,15 @@ export async function getUserArenaSessions(uid, lim = 200) {
     return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => ms(b) - ms(a))
   } catch { return [] }
 }
+
+// ── Plans / monetisation ────────────────────────────────────────────
+export async function getUserPlan(uid) {
+  try {
+    const snap = await getDoc(doc(db, 'users', uid))
+    return snap.exists() ? snap.data().plan || 'free' : 'free'
+  } catch { return 'free' }
+}
+// "Upgrade" interest until payments are live: tells you who would pay.
+export async function recordUpgradeInterest(uid, email, plan = 'pro') {
+  await setDoc(doc(db, 'upgradeInterest', uid), { uid, email: email || null, plan, at: serverTimestamp() }, { merge: true })
+}

@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
-import { createArenaSession } from '../services/firestore'
+import { createArenaSession, getUserArenaSessions, getUserPlan } from '../services/firestore'
+import { canStartRound, getPlan, usageThisMonth } from '../utils/plans'
 import { hasApiKey } from '../services/openrouter'
 import Navbar from '../components/layout/Navbar'
 import { getCompany, getRound, FORMAT_DISCLAIMER } from '../data/companies'
@@ -24,9 +25,17 @@ export default function ArenaBrief() {
   const { user } = useAuthContext()
   const navigate = useNavigate()
   const keyOk = hasApiKey()
+  const [quota, setQuota] = useState(null) // { allowed, remaining, limit, plan }
+
+  useEffect(() => {
+    if (!user) return
+    Promise.all([getUserPlan(user.uid), getUserArenaSessions(user.uid)]).then(([plan, sessions]) => {
+      setQuota({ ...canStartRound(plan, usageThisMonth(sessions)), plan })
+    })
+  }, [user])
 
   async function handleStart() {
-    if (starting) return
+    if (starting || (quota && !quota.allowed)) return
     setStarting(true); setErr('')
     try {
       const id = await createArenaSession(user.uid, {
@@ -108,7 +117,11 @@ export default function ArenaBrief() {
               </button>
             ))}
           </div>
-          {keyOk ? (
+          {quota && !quota.allowed ? (
+            <Link to="/pricing" className="px-5 py-2.5 border border-lime/50 text-lime font-mono text-xs hover:bg-g-800">
+              {quota.limit} free rounds used this month · upgrade →
+            </Link>
+          ) : keyOk ? (
             <button onClick={handleStart} disabled={starting}
               className="px-6 py-2.5 bg-lime text-black font-bold font-mono text-xs hover:bg-lime-dim disabled:opacity-50 transition-colors">
               {starting ? 'starting…' : 'START INTERVIEW →'}
@@ -120,6 +133,12 @@ export default function ArenaBrief() {
           )}
         </div>
         {err && <p className="text-red-400 font-mono text-xs">{err}</p>}
+        {quota && quota.allowed && quota.limit !== Infinity && (
+          <p className="text-white/30 font-mono text-xs text-right">
+            {getPlan(quota.plan).name} plan · {quota.remaining} of {quota.limit} rounds left this month ·{' '}
+            <Link to="/pricing" className="text-lime underline">go unlimited</Link>
+          </p>
+        )}
 
         <p className="text-white/20 font-mono text-xs">{FORMAT_DISCLAIMER}</p>
       </div>

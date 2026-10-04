@@ -21,6 +21,7 @@ const Arena          = lazy(() => import('./pages/Arena'))
 const ArenaBrief     = lazy(() => import('./pages/ArenaBrief'))
 const ArenaSession   = lazy(() => import('./pages/ArenaSession'))
 const ArenaReport    = lazy(() => import('./pages/ArenaReport'))
+const Pricing        = lazy(() => import('./pages/Pricing'))
 
 function Fallback() {
   return (
@@ -47,6 +48,7 @@ export default function App() {
                 <Route path="/"                  element={<Landing />} />
                 <Route path="/login"             element={<Login />} />
                 <Route path="/signup"            element={<Signup />} />
+                <Route path="/pricing"           element={<Suspense fallback={<Fallback />}><Pricing /></Suspense>} />
                 <Route path="/dashboard"         element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/session/new"       element={<ProtectedRoute><NewSession /></ProtectedRoute>} />
                 <Route path="/session/:sessionId" element={<ProtectedRoute><Session /></ProtectedRoute>} />
