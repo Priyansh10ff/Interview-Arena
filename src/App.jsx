@@ -17,6 +17,8 @@ const SessionHistory = lazy(() => import('./pages/SessionHistory'))
 const Settings       = lazy(() => import('./pages/Settings'))
 const TopicSession   = lazy(() => import('./pages/TopicSession'))
 const Bookmarks      = lazy(() => import('./pages/Bookmarks'))
+const Arena          = lazy(() => import('./pages/Arena'))
+const ArenaBrief     = lazy(() => import('./pages/ArenaBrief'))
 
 function Fallback() {
   return (
@@ -51,6 +53,8 @@ export default function App() {
                 <Route path="/settings"          element={<Guard><Settings /></Guard>} />
                 <Route path="/topic"             element={<Guard><TopicSession /></Guard>} />
                 <Route path="/bookmarks"         element={<Guard><Bookmarks /></Guard>} />
+                <Route path="/arena"             element={<Guard><Arena /></Guard>} />
+                <Route path="/arena/:companyId/:roundId" element={<Guard><ArenaBrief /></Guard>} />
               </Routes>
             </SessionProvider>
           </BookmarkProvider>

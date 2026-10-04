@@ -18,6 +18,7 @@ export default function Navbar() {
 
   const NAV = [
     { to: '/dashboard', label: 'Dashboard' },
+    { to: '/arena',     label: 'Arena'     },
     { to: '/history',   label: 'History'   },
     { to: '/topic',     label: 'Practice'  },
     { to: '/bookmarks', label: 'Saved'     },
@@ -41,7 +42,7 @@ export default function Navbar() {
         {user && (
           <div className="flex items-center gap-1">
             {NAV.map(({ to, label }) => {
-              const active = pathname === to
+              const active = pathname === to || (to === '/arena' && pathname.startsWith('/arena'))
               return (
                 <Link key={to} to={to}
                   className={`px-3 py-1.5 font-mono text-xs transition-colors relative hidden sm:block
