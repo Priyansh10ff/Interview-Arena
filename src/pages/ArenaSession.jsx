@@ -202,6 +202,7 @@ export default function ArenaSession() {
         <div className="border-t border-g-border p-4 space-y-3">
           <div className="text-lime font-mono text-xs">// round complete · {formatClock(elapsed)} · {turns} replies</div>
           <div className="flex gap-2 flex-wrap">
+            <Link to={`/arena/report/${sessionId}`} className="px-5 py-2 bg-lime text-black font-bold font-mono text-xs hover:bg-lime-dim">GET SCORECARD →</Link>
             <Link to="/arena" className="px-4 py-2 border border-g-border text-white/60 font-mono text-xs hover:text-white">← arena</Link>
           </div>
         </div>

@@ -20,6 +20,7 @@ const Bookmarks      = lazy(() => import('./pages/Bookmarks'))
 const Arena          = lazy(() => import('./pages/Arena'))
 const ArenaBrief     = lazy(() => import('./pages/ArenaBrief'))
 const ArenaSession   = lazy(() => import('./pages/ArenaSession'))
+const ArenaReport    = lazy(() => import('./pages/ArenaReport'))
 
 function Fallback() {
   return (
@@ -56,6 +57,7 @@ export default function App() {
                 <Route path="/bookmarks"         element={<Guard><Bookmarks /></Guard>} />
                 <Route path="/arena"             element={<Guard><Arena /></Guard>} />
                 <Route path="/arena/session/:sessionId" element={<Guard><ArenaSession /></Guard>} />
+                <Route path="/arena/report/:sessionId" element={<Guard><ArenaReport /></Guard>} />
                 <Route path="/arena/:companyId/:roundId" element={<Guard><ArenaBrief /></Guard>} />
               </Routes>
             </SessionProvider>
